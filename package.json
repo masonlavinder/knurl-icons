@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -42,7 +43,7 @@
     "vite": "^8.3.0",
     "vitest": "^5.0.1"
   },
-  "description": "Knurled Icons \u2014 a browser editor for authoring and normalizing 24\u00d724 Lucide-compatible stroke icons. By Knurled Studio.",
+  "description": "Knurled Icons — a browser editor for authoring and normalizing 24×24 Lucide-compatible stroke icons. By Knurled Studio.",
   "author": "Knurled Studio",
   "keywords": [
     "knurled icons",
