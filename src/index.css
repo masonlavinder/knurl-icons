@@ -1,0 +1,989 @@
+:root {
+  color-scheme: dark;
+  --bg: #16181d;
+  --panel: #1d2026;
+  --panel-2: #23262e;
+  --line: #2f333d;
+  --ink: #e7e9ee;
+  --ink-dim: #9aa1ae;
+  --accent: #6ea8fe;
+  --accent-soft: #6ea8fe33;
+  --danger: #ff6b6b;
+  --warn: #ffc95c;
+  --canvas: #0f1115;
+
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 13px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---------------------------------------------------------- toolbar */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  flex: 0 0 auto;
+}
+
+.brand {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.group.right {
+  margin-left: auto;
+}
+
+button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+button[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.muted {
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------- layout */
+
+.workspace {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr) 340px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.col {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.col-left {
+  border-right: 1px solid var(--line);
+}
+
+.col-right {
+  border-left: 1px solid var(--line);
+}
+
+.col-canvas {
+  background: var(--canvas);
+  padding: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--panel);
+  height: 100%;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+}
+
+/* ---------------------------------------------------------- canvas */
+
+.canvas {
+  width: min(100%, 78vh);
+  aspect-ratio: 1;
+  touch-action: none;
+  cursor: default;
+  color: var(--ink);
+}
+
+.canvas-bg {
+  fill: #12141a;
+}
+
+/* vector-effect must sit on the drawn element, not an ancestor <g>: on the
+   group it is ignored, and a 1-unit stroke then scales with zoom into a band
+   tens of pixels wide. */
+.grid-unit line {
+  stroke: #ffffff12;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.grid-half line {
+  stroke: #ffffff10;
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.pad-visual,
+.pad-geometric {
+  fill: none;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.pad-visual {
+  stroke: #6ea8fe44;
+}
+
+.pad-geometric {
+  stroke: #6ea8fe22;
+  stroke-dasharray: 3 3;
+}
+
+.keylines circle,
+.keylines rect {
+  fill: none;
+  stroke: #ffc95c40;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.sel-outline {
+  stroke: var(--accent);
+  stroke-dasharray: 4 3;
+}
+
+.node-dot {
+  fill: var(--canvas);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+}
+
+.node-dot.is-selected {
+  fill: var(--accent);
+}
+
+/* ---------------------------------------------------------- elements */
+
+.element-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.row {
+  display: flex;
+  align-items: stretch;
+  border-radius: 5px;
+}
+
+.row:hover {
+  background: #ffffff0a;
+}
+
+.row.is-selected {
+  background: var(--accent-soft);
+}
+
+.row-main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.row-main:hover {
+  border: none;
+}
+
+.row-del {
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  padding: 0 10px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.row-del:hover {
+  color: var(--danger);
+  border: none;
+}
+
+.thumb {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-dim);
+  flex: 0 0 auto;
+}
+
+.label {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.idx,
+.count {
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+
+.empty,
+.hint {
+  color: var(--ink-dim);
+  padding: 10px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.hint {
+  border-top: 1px solid var(--line);
+  margin-top: auto;
+}
+
+/* ---------------------------------------------------------- code */
+
+.code {
+  flex: 1 1 auto;
+  min-height: 0;
+  resize: none;
+  border: none;
+  outline: none;
+  padding: 10px;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  tab-size: 2;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: auto;
+}
+
+.dirty {
+  color: var(--warn);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.diag {
+  margin: 0;
+  padding: 6px 10px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+
+.diag code {
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.diag-error {
+  color: var(--danger);
+}
+
+.diag-warn {
+  color: var(--warn);
+}
+
+/* ---------------------------------------------------------- brand */
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  white-space: pre;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.brand-sub {
+  font-weight: 400;
+  color: var(--ink-dim);
+}
+
+/* ---------------------------------------------------------- add menu */
+
+.add-bar {
+  position: relative;
+  padding: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.add-toggle {
+  width: 100%;
+  text-align: left;
+}
+
+.add-menu {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.add-menu button {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 5px 7px;
+  border-radius: 4px;
+}
+
+.add-menu button:hover {
+  background: var(--accent-soft);
+  border: none;
+}
+
+.add-label {
+  font-weight: 500;
+}
+
+.add-hint {
+  color: var(--ink-dim);
+  font-size: 11px;
+}
+
+/* ---------------------------------------------------------- rows */
+
+.row-wrap {
+  border-radius: 6px;
+  margin-bottom: 2px;
+}
+
+.row-wrap.is-selected {
+  background: var(--accent-soft);
+  outline: 1px solid #6ea8fe55;
+}
+
+.row-twist {
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  padding: 0 4px 0 6px;
+  font-size: 10px;
+}
+
+.row-twist:hover {
+  border: none;
+  color: var(--ink);
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+}
+
+.row:hover .row-actions,
+.row-wrap.is-selected .row-actions {
+  opacity: 1;
+}
+
+.row-actions button {
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  padding: 0 5px;
+  font-size: 11px;
+}
+
+.row-actions button:hover:not(:disabled) {
+  border: none;
+  color: var(--ink);
+}
+
+.row-actions button:disabled {
+  opacity: 0.25;
+}
+
+/* ---------------------------------------------------------- inspector */
+
+.inspector {
+  padding: 4px 8px 10px 12px;
+}
+
+.insp-group + .insp-group {
+  margin-top: 8px;
+}
+
+.insp-title {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-dim);
+  margin-bottom: 4px;
+}
+
+.insp-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 8px;
+}
+
+.insp-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.insp-field span {
+  width: 34px;
+  flex: 0 0 auto;
+  color: var(--ink-dim);
+  font-size: 11px;
+}
+
+.insp-field input {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.insp-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.insp-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.insp-check {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+
+/* ---------------------------------------------------------- hints */
+
+.hint {
+  display: grid;
+  gap: 3px;
+  margin: auto 0 0;
+  padding: 9px 10px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+
+.hint > div {
+  display: flex;
+  gap: 8px;
+}
+
+.hint dt {
+  flex: 0 0 42px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.hint dd {
+  margin: 0;
+}
+
+/* ---------------------------------------------------------- conformance */
+
+.panel-conformance {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--line);
+  height: auto;
+  max-height: 55%;
+  overflow-y: auto;
+}
+
+.conformance-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  background: var(--panel);
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+}
+
+.panel-conformance.is-open .conformance-head {
+  border-bottom-color: var(--line);
+}
+
+.conformance-head:hover {
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: var(--ink);
+}
+
+.panel-conformance.is-open .conformance-head:hover {
+  border-bottom-color: var(--line);
+}
+
+.conformance-label {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.twist {
+  font-size: 9px;
+  color: var(--ink-dim);
+}
+
+.score {
+  font-variant-numeric: tabular-nums;
+  color: var(--warn);
+}
+
+.score.is-clean {
+  color: #6ee7a8;
+}
+
+.rules {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+}
+
+.rule button {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.rule button:not(:disabled):hover {
+  background: #ffffff0a;
+  border: none;
+}
+
+.rule button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.mark {
+  flex: 0 0 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.rule-pass .mark {
+  color: #6ee7a8;
+}
+
+.rule-warn .mark {
+  color: var(--warn);
+}
+
+.rule-fail .mark {
+  color: var(--danger);
+}
+
+.rule-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rule-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.by-construction {
+  font-style: normal;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-dim);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+
+.rule-detail {
+  color: var(--ink-dim);
+  font-size: 11px;
+}
+
+.usage {
+  margin: 0;
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.usage code {
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------- handles */
+
+.handle-arm {
+  stroke: #6ea8fe66;
+  stroke-width: 1;
+}
+
+.handle-dot {
+  fill: var(--panel);
+  stroke: var(--accent);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+  cursor: grab;
+}
+
+.handle-dot.is-selected,
+.handle-dot:hover {
+  fill: var(--accent);
+}
+
+.node-dot {
+  cursor: grab;
+}
+
+.node-dot:hover {
+  fill: var(--accent);
+}
+
+/* The node itself stays dark and neutral. Colour lives entirely in the identity
+   ring around it, so a path reads as geometry first and an index second. */
+.node-straight,
+.node-curved,
+.node-end {
+  stroke: #7d8592;
+}
+
+/* A selected node stays dark. Selection reads from the surrounding context
+   receding, not from the node changing colour -- recolouring it would fight the
+   identity ring for the same few pixels. */
+.node-dot.is-selected {
+  fill: var(--canvas);
+  stroke: #e7e9ee;
+  stroke-width: 2;
+}
+
+.node-ring:not(.is-dimmed) {
+  stroke-width: 2.75;
+}
+
+.seg-target {
+  cursor: copy;
+}
+
+/* ---------------------------------------------------------- node rows */
+
+.insp-sub {
+  display: block;
+  font-size: 10px;
+  color: var(--ink-dim);
+  margin: 6px 0 2px;
+}
+
+.node-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 0;
+}
+
+.node-row .insp-field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.node-row .insp-field {
+  gap: 4px;
+}
+
+.node-row .insp-field span {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+/* Numbers must be fully readable: a clipped coordinate is worse than no
+   coordinate, because it looks like a value rather than a truncation. */
+.node-row .insp-field input,
+.insp-field input {
+  min-width: 52px;
+}
+
+.node-kind {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  color: var(--accent);
+  padding: 0 2px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.node-kind:hover {
+  border: none;
+  color: var(--ink);
+}
+
+.node-ops {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.node-ops button {
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  padding: 0 4px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.node-ops button:hover:not(:disabled) {
+  border: none;
+  color: var(--ink);
+}
+
+.node-ops button:disabled {
+  opacity: 0.25;
+}
+
+.insp-note {
+  margin: 6px 0 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+
+.insp-check.is-disabled {
+  opacity: 0.45;
+}
+
+.row-del {
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  padding: 0 7px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.row-del:hover {
+  color: var(--danger);
+  border: none;
+}
+
+/* --------------------------------------------- node rows, selection */
+
+.node-row.is-selected {
+  background: var(--accent-soft);
+  border-radius: 4px;
+  outline: 1px solid #6ea8fe44;
+}
+
+.node-kind {
+  flex: 0 0 52px;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--ink-dim);
+  padding: 1px 4px;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+
+.node-kind:hover {
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.node-kind.is-curved {
+  color: var(--accent);
+  border-color: #6ea8fe44;
+}
+
+/* ------------------------------------------- node identity + handles */
+
+.node-ring {
+  stroke-width: 2.25;
+  vector-effect: non-scaling-stroke;
+  transition: opacity 90ms ease-out;
+}
+
+/* Selection dims everything else rather than recolouring the selected node. */
+.node-ring.is-dimmed {
+  opacity: 0.28;
+}
+
+.node-row.is-dimmed .node-swatch,
+.node-row.is-dimmed .node-index {
+  opacity: 0.35;
+}
+
+.node-row {
+  cursor: pointer;
+}
+
+/* The colour-matched grab handle: same hue as this node's ring on the canvas,
+   so the two panels identify each other without labels on the drawing. */
+.node-grab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  padding: 2px 2px 2px 0;
+  cursor: grab;
+}
+
+.node-grab:hover {
+  border: none;
+}
+
+.node-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--node-hue);
+  background: var(--canvas);
+}
+
+.node-row.is-selected .node-swatch {
+  background: var(--canvas);
+  border-width: 2.5px;
+}
+
+/* The index carries the node's own hue, so the number and the ring on the
+   canvas are recognisably the same node rather than two separate schemes. */
+.node-index {
+  font-size: 10px;
+  color: var(--node-hue);
+  font-variant-numeric: tabular-nums;
+  width: 10px;
+  text-align: right;
+}
+
+.node-remove:hover:not(:disabled) {
+  color: var(--danger) !important;
+}
+
+.node-add {
+  width: 100%;
+  margin-top: 5px;
+  background: none;
+  border: 1px dashed var(--line);
+  color: var(--ink-dim);
+  padding: 3px;
+  font-size: 11px;
+}
+
+.node-add:hover {
+  border-style: dashed;
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.keyline-cross line {
+  stroke: #ffc95c55;
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  vector-effect: non-scaling-stroke;
+}

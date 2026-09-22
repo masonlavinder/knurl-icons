@@ -1,0 +1,59 @@
+{
+  "name": "knurled-icons",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --exclude '**/roundtrip.test.ts'",
+    "test:corpus": "vitest run src/core/io/roundtrip.test.ts",
+    "test:all": "vitest run",
+    "corpus:fetch": "node scripts/fetch-corpus.mjs",
+    "corpus:drift": "node scripts/report-drift.ts"
+  },
+  "dependencies": {
+    "bezier-js": "^6.1.4",
+    "immer": "^11.1.18",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "svgpath": "^2.6.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/node": "^22.20.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@xmldom/xmldom": "^0.9.12",
+    "eslint": "^10.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.6",
+    "globals": "^17.12.0",
+    "playwright": "^1.63.0",
+    "tar": "^7.5.22",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.0",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
+  },
+  "description": "Knurled Icons \u2014 a browser editor for authoring and normalizing 24\u00d724 Lucide-compatible stroke icons. By Knurled Studio.",
+  "author": "Knurled Studio",
+  "keywords": [
+    "knurled icons",
+    "knurled studio",
+    "icon editor",
+    "svg editor",
+    "lucide",
+    "lucide-react",
+    "stroke icons",
+    "icon design",
+    "svg normalizer"
+  ],
+  "license": "UNLICENSED"
+}
