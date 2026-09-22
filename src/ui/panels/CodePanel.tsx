@@ -4,7 +4,6 @@ import { serialize } from '../../core/io/export/serialize.ts';
 import { parseSvg } from '../../core/io/import/parseSvg.ts';
 import type { Diagnostic } from '../../core/result.ts';
 import { useDocStore } from '../../store/docStore.ts';
-import { CollapseButton, type CollapseProps } from '../Chevron.tsx';
 import { lockedSpans } from './lockedSpans.ts';
 
 /** Quiet period after typing stops before the text is re-imported. */
@@ -25,7 +24,7 @@ const COPIED_MS = 1200;
  * Either way the import commits as a single history entry, so a bad paste is one
  * undo rather than forty.
  */
-export function CodePanel({ onCollapse }: CollapseProps): React.JSX.Element {
+export function CodePanel(): React.JSX.Element {
   const doc = useDocStore((s) => s.doc);
   const replace = useDocStore((s) => s.replace);
 
@@ -131,7 +130,6 @@ export function CodePanel({ onCollapse }: CollapseProps): React.JSX.Element {
           <button type="button" className="btn-head btn-copy" onClick={copy}>
             {copied ? 'Copied' : 'Copy'}
           </button>
-          <CollapseButton onCollapse={onCollapse} side="right" />
         </div>
       </div>
 

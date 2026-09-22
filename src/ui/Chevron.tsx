@@ -22,27 +22,3 @@ export function Chevron({ direction }: { direction: 'left' | 'right' }): React.J
     </svg>
   );
 }
-
-export interface CollapseProps {
-  /**
-   * Omitted where the panel is not collapsible.
-   *
-   * `| undefined` is not noise: exactOptionalPropertyTypes is on, so an
-   * optional property and one that may be passed as undefined are different
-   * types, and every call site forwards a value that may be undefined.
-   */
-  onCollapse?: (() => void) | undefined;
-  /** Which way the panel folds away. */
-  side?: 'left' | 'right' | undefined;
-}
-
-/** The button that lives in a panel head and folds the panel away. */
-export function CollapseButton({ onCollapse, side = 'left' }: CollapseProps): React.JSX.Element | null {
-  if (!onCollapse) return null;
-  const label = `Collapse the ${side} panel`;
-  return (
-    <button type="button" className="btn-head btn-collapse" title={label} aria-label={label} onClick={onCollapse}>
-      <Chevron direction={side} />
-    </button>
-  );
-}

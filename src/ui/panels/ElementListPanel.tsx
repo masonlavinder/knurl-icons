@@ -9,7 +9,6 @@ import type { Address, Element } from '../../core/model/types.ts';
 import { useDocStore } from '../../store/docStore.ts';
 import { useSelectionStore } from '../../store/selectionStore.ts';
 import { ElementInspector } from './ElementInspector.tsx';
-import { CollapseButton, type CollapseProps } from '../Chevron.tsx';
 
 /**
  * Flat element list -- flat because the model has no groups and no layers.
@@ -19,7 +18,7 @@ import { CollapseButton, type CollapseProps } from '../Chevron.tsx';
  * its own numeric fields, and every row can be deleted regardless of how small
  * or crowded the geometry is on screen.
  */
-export function ElementListPanel({ onCollapse }: CollapseProps): React.JSX.Element {
+export function ElementListPanel(): React.JSX.Element {
   const doc = useDocStore((s) => s.doc);
   const dispatch = useDocStore((s) => s.dispatch);
   const keys = useSelectionStore((s) => s.keys);
@@ -47,10 +46,7 @@ export function ElementListPanel({ onCollapse }: CollapseProps): React.JSX.Eleme
     <div className="panel panel-elements">
       <div className="panel-head">
         <span>Elements</span>
-        <div className="panel-head-actions">
-          <span className="count">{doc.elements.length}</span>
-          <CollapseButton onCollapse={onCollapse} side="left" />
-        </div>
+        <span className="count">{doc.elements.length}</span>
       </div>
 
       <div className="add-bar">

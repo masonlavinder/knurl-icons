@@ -259,11 +259,11 @@ button[aria-pressed='true'],
   flex-direction: column;
 }
 
-/* The rail sits on the inner edge, so the panel and the rail are a row and the
-   panel is the part that goes away. */
+/* The columns anchor the edge handle, which is positioned against the seam. */
 .col-left,
 .col-right {
   flex-direction: row;
+  position: relative;
 }
 
 .col-left {
@@ -291,8 +291,7 @@ button[aria-pressed='true'],
 
 /* A collapsed panel is the panel, narrowed — not a rail bolted to the side of
    the workspace. It keeps the surface, the head band and the rule under it, so
-   the closed state reads as the same object as the open one. The whole strip
-   is the hit target: 22px is a mean thing to ask someone to hit twice. */
+   the closed state reads as the same object as the open one. */
 .panel-collapsed {
   display: flex;
   flex-direction: column;
@@ -306,13 +305,45 @@ button[aria-pressed='true'],
 }
 
 .panel-collapsed .panel-head {
-  justify-content: center;
   padding: 0;
-  height: var(--head-height);
 }
 
-.panel-collapsed:hover {
+/* --------------------------------------------------------- edge handle */
+
+/* The grip sits ON the seam, because the seam is what moves. It stays in the
+   same place open or shut, so reopening is where closing was rather than
+   somewhere new. Half-height-centred: findable without hunting, and without
+   claiming the full height the way a rail did. */
+.edge-toggle {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 46px;
+  padding: 0;
+  background: var(--surface-raise);
+  border: var(--hairline);
+  color: var(--text-muted);
+}
+
+/* Flush to the seam: the column already draws the rule there, so the handle
+   drops its own edge on that side and reads as part of it. */
+.col-left .edge-toggle {
+  right: 0;
+  border-right: none;
+}
+
+.col-right .edge-toggle {
+  left: 0;
+  border-left: none;
+}
+
+.edge-toggle:hover:not(:disabled) {
   background: var(--surface-hover);
+  border-color: var(--text-accent);
   color: var(--text-accent);
 }
 
@@ -320,7 +351,10 @@ button[aria-pressed='true'],
    state still say which panel it is, which a bare chevron cannot. */
 .panel-collapsed-label {
   writing-mode: vertical-rl;
-  margin: var(--space-3) auto 0;
+  /* Pushed off the middle so it does not run under the centred handle. */
+  margin: var(--space-3) auto auto;
+  max-height: calc(50% - 40px);
+  overflow: hidden;
   font-size: var(--text-2xs);
   letter-spacing: var(--track-label);
   text-transform: uppercase;
@@ -334,14 +368,6 @@ button[aria-pressed='true'],
 
 .chev[data-point='left'] {
   transform: rotate(180deg);
-}
-
-/* The collapse control in an open panel's head. Quiet, and square like every
-   other small control. */
-.btn-collapse {
-  display: grid;
-  place-items: center;
-  padding: 2px;
 }
 
 

@@ -185,6 +185,24 @@ ok('the canvas column takes the space back', colWide.width > colOpen.width, `${M
 await p.getByRole('button', { name: /Expand the left/ }).click();
 await p.getByRole('button', { name: /Expand the right/ }).click();
 ok('both reopen', (await ws.getAttribute('data-left')) === 'open' && (await ws.getAttribute('data-right')) === 'open');
+
+// The handle lives on the seam, and does not move when the panel does.
+const seam = await p.evaluate(() => {
+  const read = (col) => {
+    const c = document.querySelector(col).getBoundingClientRect();
+    const t = document.querySelector(`${col} .edge-toggle`).getBoundingClientRect();
+    return {
+      onInnerEdge:
+        col === '.col-left'
+          ? Math.abs(t.right - c.right) < 2
+          : Math.abs(t.left - c.left) < 2,
+      midY: Math.round(t.top + t.height / 2 - (c.top + c.height / 2)),
+    };
+  };
+  return { left: read('.col-left'), right: read('.col-right') };
+});
+ok('each handle sits on its panel\'s inner edge', seam.left.onInnerEdge && seam.right.onInnerEdge, JSON.stringify(seam));
+ok('each handle is vertically centred', Math.abs(seam.left.midY) <= 1 && Math.abs(seam.right.midY) <= 1);
 ok('the left panel comes back', (await p.locator('.element-list').count()) === 1);
 
 // -- a portrait window is not a wall of chrome -----------------------------
@@ -204,6 +222,7 @@ ok('the toolbar is not clipped', !narrow.clipped);
 ok('the canvas gets the window', narrow.canvas > 600, `${narrow.canvas}px`);
 await p.getByRole('button', { name: /Expand the left/ }).click();
 ok('a panel can still be opened when narrow', (await p.locator('.element-list').count()) === 1);
+ok('the handle is reachable in both states', (await p.locator('.edge-toggle').count()) === 2);
 
 ok('no console errors', errs.length === 0, errs.join(' | '));
 console.log(fails === 0 ? '\nall checks passed' : `\n${fails} FAILED`);

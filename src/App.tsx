@@ -56,31 +56,53 @@ export default function App(): React.JSX.Element {
 }
 
 /**
- * A collapsed panel.
+ * The handle that opens and closes a panel, sitting on the panel's inner edge.
  *
- * Not a rail bolted to the side of the workspace: it is the panel, narrowed.
- * It keeps the panel's surface, its head band and the rule under it, and sets
- * the panel's own name down the strip — so the closed state reads as the same
- * object as the open one rather than as a new piece of furniture. Clicking
- * anywhere on it opens it, because a 22px target for a chevron alone is mean.
+ * On the seam rather than inside the head: the edge is what moves, so that is
+ * where the grip belongs, and it stays in the same place whether the panel is
+ * open or shut. Half-height-centred so it is findable without hunting along a
+ * full-height rail.
  */
-function CollapsedPanel({
+function EdgeToggle({
   side,
-  label,
-  onExpand,
+  open,
+  onToggle,
 }: {
   side: 'left' | 'right';
-  label: string;
-  onExpand: () => void;
+  open: boolean;
+  onToggle: () => void;
 }): React.JSX.Element {
-  const title = `Expand the ${side} panel`;
+  const label = `${open ? 'Collapse' : 'Expand'} the ${side} panel`;
+  // Open, it points outward to fold the panel away; closed, back toward the
+  // canvas to bring it out.
+  const pointsLeft = side === 'left' ? open : !open;
+
   return (
-    <button type="button" className="panel panel-collapsed" title={title} aria-label={title} aria-expanded={false} onClick={onExpand}>
-      <span className="panel-head">
-        <Chevron direction={side === 'left' ? 'right' : 'left'} />
-      </span>
-      <span className="panel-collapsed-label">{label}</span>
+    <button
+      type="button"
+      className="edge-toggle"
+      aria-expanded={open}
+      aria-label={label}
+      title={label}
+      onClick={onToggle}
+    >
+      <Chevron direction={pointsLeft ? 'left' : 'right'} />
     </button>
+  );
+}
+
+/**
+ * A collapsed panel: the panel, narrowed — not a rail bolted to the side of
+ * the workspace. It keeps the surface, the head band and the rule under it,
+ * and sets the panel's own name down the strip, so the closed state reads as
+ * the same object as the open one.
+ */
+function CollapsedPanel({ label }: { label: string }): React.JSX.Element {
+  return (
+    <div className="panel panel-collapsed" aria-hidden="true">
+      <div className="panel-head" />
+      <span className="panel-collapsed-label">{label}</span>
+    </div>
   );
 }
 
@@ -99,11 +121,8 @@ function Workspace(): React.JSX.Element {
       {/* Unmounted rather than hidden: the panels subscribe to the document,
           and a collapsed one has no business re-rendering on every drag. */}
       <aside className="col col-left">
-        {leftOpen ? (
-          <ElementListPanel onCollapse={toggleLeft} />
-        ) : (
-          <CollapsedPanel side="left" label="Elements" onExpand={toggleLeft} />
-        )}
+        {leftOpen ? <ElementListPanel /> : <CollapsedPanel label="Elements" />}
+        <EdgeToggle side="left" open={leftOpen} onToggle={toggleLeft} />
       </aside>
 
       <main className="col col-canvas">
@@ -111,13 +130,14 @@ function Workspace(): React.JSX.Element {
       </main>
 
       <aside className="col col-right">
+        <EdgeToggle side="right" open={rightOpen} onToggle={toggleRight} />
         {rightOpen ? (
           <div className="col-stack">
-            <CodePanel onCollapse={toggleRight} />
+            <CodePanel />
             <ConformancePanel />
           </div>
         ) : (
-          <CollapsedPanel side="right" label="SVG" onExpand={toggleRight} />
+          <CollapsedPanel label="SVG" />
         )}
       </aside>
     </div>
