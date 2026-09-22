@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Vite / TypeScript caches
+.vite/
+*.tsbuildinfo
+
+# Fetched Lucide corpus (see scripts/fetch-corpus.mjs; pinned by
+# src/test/corpus/corpus.lock.json, so it is reproducible, not committed)
+.cache/
+
+# Test output: screenshots written by scripts/check-m0.mjs
+test-artifacts/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+/playwright/.cache/
+
+# Coverage
+coverage/
+*.lcov
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
