@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 /**
- * View gate: the object cannot be lost, and the toolbar does what it says.
+ * Chrome gate: the shell around the drawing does what it says.
  *
- * The clamp itself is unit-tested in src/store/viewStore.test.ts. What cannot
- * be tested there is whether the gestures actually reach it — a drag is a
- * pointer capture, a wheel is a passive listener, and a button is a click on a
- * chamfered face — so this drives the real app in a real browser and checks the
- * viewBox the SVG is actually carrying.
+ * The toolbar, the collapsing rails, the panel controls, and the rule that the
+ * icon cannot be panned or zoomed off screen. The clamp behind that last one is
+ * unit-tested in src/store/viewStore.test.ts; what cannot be tested there is
+ * whether the gestures actually reach it — a drag is a pointer capture, a wheel
+ * is a passive listener, a button is a click on a chamfered face — so this
+ * drives the real app in a real browser and reads the viewBox the SVG is
+ * actually carrying.
  *
  *   node scripts/check-view.mjs [url]
  */
@@ -20,7 +22,13 @@ const ok = (name, pass, detail = '') => {
 };
 
 const b = await chromium.launch({ channel: 'chrome' });
-const p = await b.newPage({ viewport: { width: 1400, height: 900 } });
+// The copy button reads the clipboard back, which needs the permission granted
+// at the context rather than the page.
+const ctx = await b.newContext({
+  viewport: { width: 1400, height: 900 },
+  permissions: ['clipboard-read', 'clipboard-write'],
+});
+const p = await ctx.newPage();
 const errs = [];
 p.on('pageerror', (e) => errs.push(String(e)));
 p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
@@ -113,6 +121,55 @@ await p.mouse.up();
 ok('dragging the background keeps the selection', (await p.locator('.element-list .row-wrap.is-selected').count()) === 1);
 await p.mouse.click(box.x + 12, box.y + 12);
 ok('clicking the background still clears it', (await p.locator('.element-list .row-wrap.is-selected').count()) === 0);
+
+// -- copy out of the SVG panel ---------------------------------------------
+await p.getByRole('button', { name: 'Copy' }).click();
+const clip = await p.evaluate(() => navigator.clipboard.readText());
+ok('Copy puts the panel text on the clipboard', clip === (await p.locator('.panel-code .code').inputValue()));
+ok('Copy says so', (await p.locator('.btn-head').textContent()) === 'Copied');
+await p.waitForTimeout(1400);
+ok('Copy goes back to normal', (await p.locator('.btn-head').textContent()) === 'Copy');
+
+// -- collapsing rails ------------------------------------------------------
+const ws = p.locator('.workspace');
+const colOpen = await p.locator('.col-canvas').boundingBox();
+ok('both panels start open on a wide window', (await ws.getAttribute('data-left')) === 'open' && (await ws.getAttribute('data-right')) === 'open');
+
+await p.getByRole('button', { name: /Collapse the left/ }).click();
+ok('the left rail collapses its panel', (await ws.getAttribute('data-left')) === 'closed');
+ok('the collapsed left panel is gone from the tree', (await p.locator('.element-list').count()) === 0);
+
+await p.getByRole('button', { name: /Collapse the right/ }).click();
+ok('the right rail collapses its panel', (await ws.getAttribute('data-right')) === 'closed');
+
+// The artboard itself is square and capped at 78vh, so on a short window it is
+// height-bound and collapsing cannot widen it. The column is what gains the
+// space, and that is what the rails are for.
+const colWide = await p.locator('.col-canvas').boundingBox();
+ok('the canvas column takes the space back', colWide.width > colOpen.width, `${Math.round(colOpen.width)} -> ${Math.round(colWide.width)}`);
+
+await p.getByRole('button', { name: /Expand the left/ }).click();
+await p.getByRole('button', { name: /Expand the right/ }).click();
+ok('both reopen', (await ws.getAttribute('data-left')) === 'open' && (await ws.getAttribute('data-right')) === 'open');
+ok('the left panel comes back', (await p.locator('.element-list').count()) === 1);
+
+// -- a portrait window is not a wall of chrome -----------------------------
+await p.setViewportSize({ width: 820, height: 1080 });
+await p.reload({ waitUntil: 'networkidle' });
+await p.waitForSelector('.canvas');
+const narrow = await p.evaluate(() => ({
+  left: document.querySelector('.workspace').dataset.left,
+  right: document.querySelector('.workspace').dataset.right,
+  hScroll: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  clipped: document.querySelector('.toolbar').scrollWidth > document.querySelector('.toolbar').clientWidth + 1,
+  canvas: Math.round(document.querySelector('.canvas').getBoundingClientRect().width),
+}));
+ok('a portrait window starts with both panels collapsed', narrow.left === 'closed' && narrow.right === 'closed');
+ok('it has no horizontal page scroll', !narrow.hScroll);
+ok('the toolbar is not clipped', !narrow.clipped);
+ok('the canvas gets the window', narrow.canvas > 600, `${narrow.canvas}px`);
+await p.getByRole('button', { name: /Expand the left/ }).click();
+ok('a panel can still be opened when narrow', (await p.locator('.element-list').count()) === 1);
 
 ok('no console errors', errs.length === 0, errs.join(' | '));
 console.log(fails === 0 ? '\nall checks passed' : `\n${fails} FAILED`);

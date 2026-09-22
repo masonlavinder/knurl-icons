@@ -8,6 +8,9 @@ import { useDocStore } from '../../store/docStore.ts';
 /** Quiet period after typing stops before the text is re-imported. */
 const SETTLE_MS = 350;
 
+/** How long the copy button admits it worked before going back to normal. */
+const COPIED_MS = 1200;
+
 /**
  * Bidirectional code panel: edit or paste SVG here and it becomes geometry.
  *
@@ -29,12 +32,40 @@ export function CodePanel(): React.JSX.Element {
   const [dirty, setDirty] = useState(false);
   const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Follow the document unless the user is mid-edit.
   useEffect(() => {
     if (!dirty) setDraft(serialized);
   }, [serialized, dirty]);
+
+  useEffect(() => () => {
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+  }, []);
+
+  /**
+   * Copy what is in the box, not what the document would serialize to.
+   *
+   * Those differ while an edit is settling, and copying the document behind the
+   * user's back would hand them markup they cannot see on screen.
+   */
+  const copy = useCallback(() => {
+    const done = (): void => {
+      setCopied(true);
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(false), COPIED_MS);
+    };
+    navigator.clipboard.writeText(draft).then(done, () => {
+      // Clipboard permission can be refused, and over plain http the API is not
+      // there at all. Selecting the text is the fallback that always works:
+      // the user finishes the job with their own copy shortcut.
+      const box = document.querySelector<HTMLTextAreaElement>('.panel-code .code');
+      box?.focus();
+      box?.select();
+    });
+  }, [draft]);
 
   const apply = useCallback(
     (text: string) => {
@@ -69,7 +100,12 @@ export function CodePanel(): React.JSX.Element {
     <div className="panel panel-code">
       <div className="panel-head">
         <span>SVG</span>
-        {dirty && <span className="dirty">applying…</span>}
+        <div className="panel-head-actions">
+          {dirty && <span className="dirty">applying…</span>}
+          <button type="button" className="btn-head" onClick={copy}>
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+        </div>
       </div>
 
       <textarea

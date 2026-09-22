@@ -21,7 +21,8 @@
 .toolbar {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
   padding: var(--space-2) var(--space-3);
   border-bottom: var(--hairline);
   background: var(--surface-panel);
@@ -45,20 +46,48 @@
   gap: var(--space-4);
 }
 
-/* Chamfered, and the cut is the whole edge treatment: clip-path clips a
-   border away, so a control this size cannot have both. The face reads as
-   raised from the flat step up off the panel instead, which is the house
-   answer to depth anyway. */
+/* Square by default, with an ink edge.
+   ---------------------------------------------------------------------------
+   The chamfer belongs to the banner and to the mark, not to every control. At
+   banner size the cut reads as a deliberate bevel; on a 14px row action it
+   reads as a corner that got knocked off, and it was loudest exactly when a
+   hover fill arrived to point at it. The house rule is chamfers or square
+   edges — never rounded — so the small controls take the square. */
 button {
   font: inherit;
   color: var(--text-primary);
   background: var(--surface-raise);
+  border: var(--hairline);
   padding: 4px 10px;
   cursor: pointer;
   transition:
     color var(--dur-detent) var(--ease-out),
+    border-color var(--dur-detent) var(--ease-out),
     background-color var(--dur-detent) var(--ease-out);
+}
 
+button:hover:not(:disabled) {
+  background: var(--surface-tint);
+  border-color: var(--text-accent);
+  color: var(--text-accent);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ------------------------------------------------------- banner variants */
+
+/* Three kinds of control live in the banner, and at rest they should not all
+   look like the same thing:
+     · action  — does something once. Raised face, ink edge. Open, Save, Fit.
+     · toggle  — carries state. Flat at rest so it reads as a switch rather
+                 than a button, stamped in the accent when it is on.
+     · icon    — a glyph, not a word. Square footprint so a row of them keeps
+                 its rhythm.
+   The chamfer is on all three, because it is the banner that wears it. */
+.toolbar button {
   --chamfer: var(--chamfer-sm);
 
   clip-path: polygon(
@@ -71,27 +100,39 @@ button {
   );
 }
 
-button:hover:not(:disabled) {
-  background: var(--surface-tint);
-  color: var(--text-accent);
+.toolbar .btn-toggle {
+  background: none;
+  color: var(--text-muted);
 }
 
-button:disabled {
-  opacity: 0.4;
-  cursor: default;
+.toolbar .btn-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  padding: 4px 0;
+  font-size: var(--text-base);
+  line-height: 1;
+
+  /* A cut sized for a word is most of the width of a glyph. */
+  --chamfer: 5px;
 }
 
 /* A pressed toggle is a stamped block: the accent at full strength with paper
-   knocked out of it. Reserved for this and nothing larger. */
-button[aria-pressed='true'] {
+   knocked out of it. Reserved for this and nothing larger.
+
+   Selector weight matters here: .toolbar .btn-toggle is (0,2,0) and would beat
+   a bare button[aria-pressed] whatever the source order, which left an "on"
+   toggle wearing the flat rest state and only an accent edge to say so. */
+button[aria-pressed='true'],
+.toolbar .btn-toggle[aria-pressed='true'] {
   background: var(--surface-accent);
+  border-color: var(--surface-accent);
   color: var(--text-on-accent);
 }
 
-/* clip-path clips an outline, so the ring has to be inset. */
-button:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 3px var(--focus-ring);
+.toolbar .btn-toggle[aria-pressed='true']:hover {
+  background: var(--surface-accent);
+  color: var(--text-on-accent);
 }
 
 .muted {
@@ -137,9 +178,25 @@ button:focus-visible {
 
 .workspace {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr) 340px;
+
+  /* Panel widths are variables so collapsing is one substitution rather than a
+     second grid definition. They also shrink before they collapse: at 1100px
+     the pair of them would otherwise take two thirds of the window. */
+  --rail: 22px;
+  --panel-left: clamp(220px, 22vw, 300px);
+  --panel-right: clamp(260px, 26vw, 340px);
+
+  grid-template-columns: var(--panel-left) minmax(0, 1fr) var(--panel-right);
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.workspace[data-left='closed'] {
+  --panel-left: var(--rail);
+}
+
+.workspace[data-right='closed'] {
+  --panel-right: var(--rail);
 }
 
 .col {
@@ -149,12 +206,66 @@ button:focus-visible {
   flex-direction: column;
 }
 
+/* The rail sits on the inner edge, so the panel and the rail are a row and the
+   panel is the part that goes away. */
+.col-left,
+.col-right {
+  flex-direction: row;
+}
+
 .col-left {
   border-right: var(--hairline);
 }
 
 .col-right {
   border-left: var(--hairline);
+}
+
+/* The right column stacks two panels; the left has one that fills it. */
+.col-left > .panel,
+.col-stack {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.col-stack {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* --------------------------------------------------------- collapse rail */
+
+.rail {
+  flex: 0 0 var(--rail);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--space-2) 0 0;
+  background: var(--surface-page);
+  border: none;
+  border-left: var(--hairline);
+  color: var(--text-muted);
+}
+
+.col-right .rail {
+  border-left: none;
+  border-right: var(--hairline);
+}
+
+.rail:hover:not(:disabled) {
+  background: var(--surface-tint);
+  color: var(--text-accent);
+}
+
+.rail-chev {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--dur-detent) var(--ease-out);
+}
+
+.rail[data-point='left'] .rail-chev {
+  transform: rotate(180deg);
 }
 
 .col-canvas {
@@ -183,6 +294,25 @@ button:focus-visible {
   text-transform: uppercase;
   letter-spacing: var(--track-label);
   color: var(--text-muted);
+}
+
+/* A panel head can carry controls as well as a title. They sit at the far end
+   of the head, which is already a spread. */
+.panel-head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Square and quiet, like every other small control. It lives in a head that is
+   set in uppercase mono, so it matches that rather than the banner. */
+.btn-head {
+  padding: 1px var(--space-2) 2px;
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: none;
 }
 
 /* ---------------------------------------------------------- canvas */
@@ -445,15 +575,7 @@ button:focus-visible {
   margin: 6px 0 0;
   padding: 4px;
   background: var(--surface-raise);
-
-  clip-path: polygon(
-    var(--chamfer) 0,
-    100% 0,
-    100% calc(100% - var(--chamfer)),
-    calc(100% - var(--chamfer)) 100%,
-    0 100%,
-    0 var(--chamfer)
-  );
+  border: var(--hairline);
 }
 
 .add-menu button {

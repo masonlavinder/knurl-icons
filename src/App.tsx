@@ -48,19 +48,92 @@ export default function App(): React.JSX.Element {
   return (
     <div className="app">
       <Toolbar />
-      <div className="workspace">
-        <aside className="col col-left">
-          <ElementListPanel />
-        </aside>
-        <main className="col col-canvas">
-          <CanvasRoot />
-        </main>
-        <aside className="col col-right">
-          <CodePanel />
-          <ConformancePanel />
-        </aside>
-      </div>
+      <Workspace />
       <StudioFooter />
+    </div>
+  );
+}
+
+/**
+ * A rail: the strip on a panel's inner edge that collapses and reopens it.
+ *
+ * The chevron always points the way the panel will move, which is the only
+ * reading of it that survives being on both sides of the screen at once.
+ * Drawn to the house icon spec — 24x24, stroke 2, round cap and join — because
+ * a hand-rolled glyph in an icon editor would be embarrassing.
+ */
+function Rail({
+  side,
+  open,
+  onToggle,
+}: {
+  side: 'left' | 'right';
+  open: boolean;
+  onToggle: () => void;
+}): React.JSX.Element {
+  const label = `${open ? 'Collapse' : 'Expand'} the ${side} panel`;
+  // Open, it points outward to fold the panel away; closed, back toward the
+  // canvas to bring it out.
+  const pointsLeft = side === 'left' ? open : !open;
+
+  return (
+    <button
+      type="button"
+      className="rail"
+      data-point={pointsLeft ? 'left' : 'right'}
+      aria-expanded={open}
+      aria-label={label}
+      title={label}
+      onClick={onToggle}
+    >
+      <svg
+        className="rail-chev"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </button>
+  );
+}
+
+function Workspace(): React.JSX.Element {
+  const leftOpen = useViewStore((s) => s.leftOpen);
+  const rightOpen = useViewStore((s) => s.rightOpen);
+  const toggleLeft = useViewStore((s) => s.toggleLeft);
+  const toggleRight = useViewStore((s) => s.toggleRight);
+
+  return (
+    <div
+      className="workspace"
+      data-left={leftOpen ? 'open' : 'closed'}
+      data-right={rightOpen ? 'open' : 'closed'}
+    >
+      <aside className="col col-left">
+        {/* Unmounted rather than hidden: the panels subscribe to the document,
+            and a collapsed one has no business re-rendering on every drag. */}
+        {leftOpen ? <ElementListPanel /> : null}
+        <Rail side="left" open={leftOpen} onToggle={toggleLeft} />
+      </aside>
+
+      <main className="col col-canvas">
+        <CanvasRoot />
+      </main>
+
+      <aside className="col col-right">
+        <Rail side="right" open={rightOpen} onToggle={toggleRight} />
+        {rightOpen ? (
+          <div className="col-stack">
+            <CodePanel />
+            <ConformancePanel />
+          </div>
+        ) : null}
+      </aside>
     </div>
   );
 }
@@ -152,10 +225,15 @@ function Toolbar(): React.JSX.Element {
       </div>
 
       <div className="group">
-        <button type="button" onClick={toggleGrid} aria-pressed={showGrid}>
+        <button type="button" className="btn-toggle" onClick={toggleGrid} aria-pressed={showGrid}>
           Grid
         </button>
-        <button type="button" onClick={toggleKeylines} aria-pressed={showKeylines}>
+        <button
+          type="button"
+          className="btn-toggle"
+          onClick={toggleKeylines}
+          aria-pressed={showKeylines}
+        >
           Keylines
         </button>
       </div>
@@ -163,6 +241,7 @@ function Toolbar(): React.JSX.Element {
       <div className="group">
         <button
           type="button"
+          className="btn-icon"
           onClick={() => zoomAtCentre(1 / ZOOM_STEP)}
           disabled={viewW >= ZOOM_LIMITS.MAX_W - 1e-9}
           aria-label="Zoom out"
@@ -172,6 +251,7 @@ function Toolbar(): React.JSX.Element {
         </button>
         <button
           type="button"
+          className="btn-icon"
           onClick={() => zoomAtCentre(ZOOM_STEP)}
           disabled={viewW <= ZOOM_LIMITS.MIN_W + 1e-9}
           aria-label="Zoom in"

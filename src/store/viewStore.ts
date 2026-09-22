@@ -17,6 +17,9 @@ type ViewState = {
   zoom: number;
   showGrid: boolean;
   showKeylines: boolean;
+  /** Side panels. Collapsed to a rail rather than unmounted. */
+  leftOpen: boolean;
+  rightOpen: boolean;
 
   setViewBox: (vb: ViewBox) => void;
   setZoom: (zoom: number) => void;
@@ -27,7 +30,25 @@ type ViewState = {
   reset: () => void;
   toggleGrid: () => void;
   toggleKeylines: () => void;
+  toggleLeft: () => void;
+  toggleRight: () => void;
 };
+
+/**
+ * Narrower than this and the two side panels plus a usable artboard do not fit
+ * across the window at once.
+ *
+ * 300 + 340 of chrome leaves 460 for the canvas at 1100, which is about the
+ * least that is worth drawing on. Below it both panels start collapsed — a
+ * portrait window opened to three full columns is the thing this rail exists
+ * to prevent, and it should not need a click to fix on arrival.
+ */
+const NARROW_PX = 1100;
+
+/** SSR and the node test environment have no window; assume it is roomy. */
+function roomy(): boolean {
+  return typeof window === 'undefined' || window.innerWidth >= NARROW_PX;
+}
 
 /** Widest and narrowest the view may get, in icon units. */
 const MAX_W = CANVAS * 4;
@@ -82,6 +103,8 @@ export const useViewStore = create<ViewState>((set, get) => ({
   zoom: 1,
   showGrid: true,
   showKeylines: false,
+  leftOpen: roomy(),
+  rightOpen: roomy(),
 
   setViewBox: (viewBox) => set({ viewBox: clamp(viewBox) }),
   setZoom: (zoom) => {
@@ -111,6 +134,8 @@ export const useViewStore = create<ViewState>((set, get) => ({
   reset: () => set({ viewBox: INITIAL }),
   toggleGrid: () => set({ showGrid: !get().showGrid }),
   toggleKeylines: () => set({ showKeylines: !get().showKeylines }),
+  toggleLeft: () => set({ leftOpen: !get().leftOpen }),
+  toggleRight: () => set({ rightOpen: !get().rightOpen }),
 }));
 
 /** Exposed for the toolbar, so a button at the limit can disable itself. */
