@@ -31,6 +31,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # The design rules gate the deploy, the way they do in the studio: a
+      # commit that breaks one fails here and never reaches the site. `build`
+      # runs typecheck and stylelint itself, so this is the eslint half.
+      - run: pnpm run lint
+
       - run: pnpm run build
 
       - uses: actions/configure-pages@v5

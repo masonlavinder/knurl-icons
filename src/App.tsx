@@ -1,5 +1,9 @@
 import { useEffect } from 'react';
 
+import { Knurl } from './brand/Knurl.tsx';
+import { Mark } from './brand/Mark.tsx';
+import { StudioFooter } from './brand/StudioFooter.tsx';
+import { PART } from './brand/part.ts';
 import { parseSvg } from './core/io/import/parseSvg.ts';
 import { useDocStore } from './store/docStore.ts';
 import { useSelectionStore } from './store/selectionStore.ts';
@@ -42,6 +46,7 @@ export default function App(): React.JSX.Element {
   return (
     <div className="app">
       <Toolbar />
+      <Knurl />
       <div className="workspace">
         <aside className="col col-left">
           <ElementListPanel />
@@ -54,6 +59,7 @@ export default function App(): React.JSX.Element {
           <ConformancePanel />
         </aside>
       </div>
+      <StudioFooter />
     </div>
   );
 }
@@ -74,9 +80,13 @@ function Toolbar(): React.JSX.Element {
 
   return (
     <header className="toolbar">
-      <strong className="brand">
-        Knurled <span className="brand-sub">Icons</span>
-      </strong>
+      <a className="lockup" href="https://knurled.studio">
+        <Mark size={20} />
+        <strong className="brand">
+          Knurled <span className="brand-sub">Icons</span>
+        </strong>
+        <span className="part">{PART.partNumber}</span>
+      </a>
 
       <div className="group">
         <button type="button" onClick={undo} disabled={history.past.length === 0}>

@@ -1,0 +1,161 @@
+/* knurl-icons — instrument.css
+   The one deliberate deviation from the studio direction, kept in one file so
+   it can be read in full and argued with.
+
+   KNURLED.md says "one theme, and it is light." That holds for the studio's
+   documents. This is not a document — it is the surface an icon is drawn on,
+   and a 24x24 stroke glyph is judged against the ground it will sit on. The
+   editor keeps a dark work surface so a stroke reads as a stroke.
+
+   Everything else is the studio's: the ink ramp, both hues, the type, the
+   chamfer, the knurl, the 4px grid. What this file does is repoint the
+   SEMANTIC ALIASES at the dark end of the same ramp. That is what makes it an
+   adaptation rather than a second design system — patterns.css is imported
+   verbatim and every fragment in it (chamferFace, hairline, monoLabel, knurl)
+   comes out correct on the dark substrate without a single override, because
+   each one reads the alias rather than the raw colour.
+
+   Layer note: `instrument` is not in global.css's @layer statement, so it is
+   appended after every declared layer and wins on specificity ties. That is
+   intentional and is why global.css can stay a verbatim mirror. */
+
+@layer instrument {
+  :root {
+    /* ---- the dark end of the stock ramp ---------------------------- */
+    /* Warm charcoal, not blue-black. These continue --stock-* past 950
+       rather than starting a second neutral family; ratios are against
+       --surface-panel, the surface most text is read on here. */
+    --stock-1000: #080807;    /* deepest: the drawing canvas ground */
+    --stock-300:  #A8A69C;    /* muted text on dark — 6.98:1 */
+    --stock-700:  #2A2A27;    /* raised: inputs, hovered rows, button faces */
+
+    /* ---- semantic aliases, repointed ------------------------------- */
+    /* Same names, same jobs, opposite end of the ramp. Nothing downstream
+       knows the substrate flipped. */
+    --surface-page:  var(--stock-950);
+    --surface-panel: var(--stock-800);
+    --surface-raise: var(--stock-700);
+    --edge:          var(--stock-600);
+    --edge-strong:   var(--stock-300);
+    --text-primary:  var(--paper);
+    --text-muted:    var(--stock-300);
+    --rule:          var(--stock-600);
+
+    /* Lavinder-600 is the accent on paper at 7.22:1. On charcoal it is the
+       darker of the two and disappears, so the accent steps to lavinder-400
+       — the token tokens.css marks DECORATIVE ONLY because it fails AA on
+       paper. On --surface-panel it is 5.23:1 and passes. Same hue, and the
+       one that is legible is the one that gets used. */
+    --text-accent: var(--lavinder-400);
+
+    /* Verdigris-700 is 2.82:1 here and fails outright, and the ramp has
+       nothing between it and the near-white 050. This is the one new hue
+       value the instrument needs: the same green, lifted to 7.25:1. */
+    --verdigris-300:  #5FB8AC;
+    --text-external:  var(--verdigris-300);
+
+    /* The accent as a ground keeps full strength — lavinder-600 under paper
+       text is 7.22:1 regardless of what surrounds it, so a stamped block
+       reads identically in both places. The soft fill cannot be the paper
+       tint, which would be a hole punched in the panel; on dark the
+       equivalent is the accent at low alpha. */
+    --surface-accent: var(--lavinder-600);
+    --surface-tint:   #A87BD41F;
+    --text-on-accent: var(--paper);
+
+    /* The grain stays at lavinder-600, the house finish, rather than following
+       the accent up the ramp. Text has to be legible and steps to 400; a
+       texture only has to be seen, and 400 across a full-width strip turns a
+       divider into the loudest thing on screen. 600 on charcoal sits where
+       600 on paper sits in the studio: present, not shouting. The Mark sets
+       its own 400 locally — at 20px the glyph needs the contrast. */
+    --knurl-line: var(--lavinder-600);
+
+    /* ---- signal colours -------------------------------------------- */
+    /* Not brand hues, and they exist only here. The studio's pages have
+       nothing to report; a conformance panel does, and red/amber/green is
+       the one convention it would be perverse to reinvent in purple. Warmed
+       to sit with --paper rather than fight it. */
+    --signal-fail: #E8736B;   /* 5.36:1 on panel */
+    --signal-warn: #E0B44A;   /* 8.35:1 */
+    --signal-pass: var(--verdigris-300);
+
+    /* ---- canvas ----------------------------------------------------- */
+    /* The drawing ground sits a step below the page so the artboard reads as
+       inset rather than as more panel. Overlays on it are alpha on paper, so
+       they hold whatever the canvas is set to. */
+    --canvas-face:      var(--stock-1000);
+    --canvas-grid:      #F4F2EB14;
+    --canvas-grid-half: #F4F2EB0E;
+    --canvas-hover:     #F4F2EB0A;
+
+    /* Guide overlays. The pad is the house finish; keylines are a signal,
+       so they take the warn amber the conformance panel already uses. */
+    --guide-pad:      #A87BD455;
+    --guide-pad-soft: #A87BD42B;
+    --guide-keyline:  #E0B44A55;
+    --guide-handle:   #A87BD47A;
+
+    /* A node with no state of its own. Mid-ramp, so it recedes from both the
+       selected node (paper) and the accent. */
+    --node-neutral: var(--stock-400);
+
+    /* The studio sets --edge-weight to 2px because a 1px grey hairline
+       disappears on paper. On charcoal the ink is the lighter of the two and
+       1px holds on its own, and an editor packs far more rules into far less
+       height than a page does — at 2px the workspace reads as a grid of boxes
+       rather than as panels. Weight is still what separates a rule from a
+       strong one; the whole scale just steps down one notch. --hairline and
+       the chamfer face inset both derive from this, so they follow on their
+       own rather than being re-decided.  */
+    --edge-weight: 1px;
+
+    /* Chamfered surfaces clip an outline away, so the focus ring is an inset
+       box-shadow. One token, because the ring colour has to track the accent
+       onto the dark substrate and patterns.css hardcodes lavinder-600. */
+    --focus-ring: var(--lavinder-400);
+  }
+
+  /* global.css sets these for paper. Same declarations, dark values. */
+  html {
+    color-scheme: dark;
+    scrollbar-color: var(--stock-600) transparent;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--focus-ring);
+  }
+
+  ::selection {
+    background: var(--lavinder-600);
+    color: var(--paper);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--stock-600);
+    border: 3px solid var(--surface-panel);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--stock-300);
+  }
+
+  /* The editor is a fixed-height instrument: the workspace scrolls inside its
+     columns, the page itself never does. global.css's min-height is for a
+     document that grows. */
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* 13px was the app's base. The studio sets 16px because mono prose needs
+     the step up, but a panel of numbers is not prose and 16px mono costs a
+     column of the inspector. 14px is the compromise: --text-sm as the base,
+     with the scale above it untouched. */
+  body {
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+  }
+}

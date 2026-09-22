@@ -1,0 +1,36 @@
+@layer components {
+  /* The mark is the studio's two rules in one glyph: a chamfered square with
+     the knurl cut into it. Two layers, because clip-path clips a border.
+
+     Mirrors the kit's Mark. The one change is the face, which takes the panel
+     it sits on rather than --surface-page: the header here is a panel, and a
+     glyph carrying the page colour would read as a hole cut through it. */
+  .shell {
+    composes: chamferShell from '../../vendor/knurled-kit/patterns.css';
+
+    display: flex;
+    flex: none;
+    width: var(--mark-size);
+    height: var(--mark-size);
+
+    /* Scaled down from the panel chamfer — 13px on a 24px glyph would cut
+       the corners off entirely. */
+    --chamfer: calc(var(--mark-size) / 4);
+
+    background: var(--lavinder-400);
+  }
+
+  .face {
+    composes: chamferFace from '../../vendor/knurled-kit/patterns.css';
+    composes: knurl from '../../vendor/knurled-kit/patterns.css';
+
+    flex: 1;
+    background-color: var(--surface-panel);
+
+    /* Tighter grain than the strips: at this size the 7px pitch reads as
+       two diamonds and loses the texture. */
+    --knurl-pitch: calc(var(--mark-size) / 5);
+    --knurl-width: 1px;
+    --knurl-line: var(--lavinder-400);
+  }
+}

@@ -1,0 +1,153 @@
+/* @knurled/kit — patterns.css
+   Composable fragments. Reached only via `composes:` from a CSS Module.
+   Never reference these class names directly in JSX. */
+
+@layer patterns {
+
+  /* ---- type treatments ------------------------------------------ */
+
+  .monoLabel {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.4;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .monoValue {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+  }
+
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  .partNumber {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--track-label);
+    color: var(--text-accent);
+  }
+
+  .prose {
+    max-width: var(--measure);
+    line-height: var(--leading-body);
+  }
+
+  /* A block of tabular or panelled data. Wider than prose, still finite, and
+     pinned left like everything else. */
+  .slab {
+    max-width: var(--measure-wide);
+  }
+
+  .dim { color: var(--text-muted); }
+
+  /* ---- chamfer --------------------------------------------------- */
+  /* Two layers, because clip-path clips the border. Shell paints the
+     edge; face is inset 1px and paints the surface. */
+
+  .chamferShell {
+    background: var(--edge);
+    clip-path: polygon(
+      var(--chamfer) 0,
+      100% 0,
+      100% calc(100% - var(--chamfer)),
+      calc(100% - var(--chamfer)) 100%,
+      0 100%,
+      0 var(--chamfer)
+    );
+  }
+
+  .chamferFace {
+    margin: var(--edge-weight);
+    background: var(--surface-panel);
+    clip-path: polygon(
+      calc(var(--chamfer) - var(--edge-weight)) 0,
+      100% 0,
+      100% calc(100% - var(--chamfer) + var(--edge-weight)),
+      calc(100% - var(--chamfer) + var(--edge-weight)) 100%,
+      0 100%,
+      0 calc(var(--chamfer) - var(--edge-weight))
+    );
+  }
+
+  .chamferShellSm {
+    composes: chamferShell;
+    --chamfer: var(--chamfer-sm);
+  }
+
+  /* Chamfered surfaces cannot show an outline — it gets clipped.
+     Interactive panels compose this onto the FACE, not the shell. */
+  .focusInset:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 3px var(--lavinder-600);
+  }
+
+  /* ---- rules and marks -------------------------------------------- */
+
+  .hairline { border-top: var(--hairline); }
+  .hairlineBelow { border-bottom: var(--hairline); }
+
+  .knurl {
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        var(--knurl-line) 0 var(--knurl-width),
+        transparent var(--knurl-width) var(--knurl-pitch)),
+      repeating-linear-gradient(
+        -45deg,
+        var(--knurl-line) 0 var(--knurl-width),
+        transparent var(--knurl-width) var(--knurl-pitch));
+  }
+
+  .hatch {
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--knurl-line) 0 var(--knurl-width),
+      transparent var(--knurl-width) var(--knurl-pitch));
+  }
+
+  /* ---- motion ------------------------------------------------------ */
+
+  .detent { transition: all var(--dur-detent) var(--ease-detent); }
+  .fade   { transition: color var(--dur-detent) var(--ease-out),
+                        background-color var(--dur-detent) var(--ease-out); }
+
+  /* ---- layout ------------------------------------------------------ */
+
+  /* The gutter, and nothing else. It sits on each band — header, main, the
+     footer bar — rather than on the outer shell, so that anything meant to
+     run edge to edge (the knurl strips, a flood band) can simply not
+     compose it instead of having to claw its way back out with negative
+     margins. There is no page container any more: content is pinned left
+     and the viewport is the width. */
+  .gutter {
+    padding-inline: var(--gutter);
+  }
+
+  /* Cancels the band's gutter so a strip runs edge to edge while the text
+     around it stays on the page's one left margin. */
+  .bleed {
+    margin-inline: calc(var(--gutter) * -1);
+  }
+
+  .stack { display: flex; flex-direction: column; gap: var(--space-4); }
+  .row   { display: flex; align-items: center; gap: var(--space-3); }
+  .spread { display: flex; align-items: baseline; justify-content: space-between;
+            gap: var(--space-4); }
+
+  /* ---- utility ------------------------------------------------------ */
+
+  .srOnly {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

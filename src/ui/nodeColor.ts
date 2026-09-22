@@ -6,13 +6,16 @@
  * node. Hues advance by the golden angle, which keeps adjacent nodes far apart
  * in colour without anyone choosing a palette.
  *
+ * Node 0 starts at the house accent hue, so the index begins where the brand
+ * does and walks away from it.
+ *
  * Saturation and lightness stay low and fixed: this is a quiet index, not a
  * highlight, and it must never compete with the selection colour.
  */
 const GOLDEN_ANGLE = 137.508;
 
 export function nodeHue(index: number): number {
-  return (index * GOLDEN_ANGLE + 205) % 360;
+  return (index * GOLDEN_ANGLE + 275) % 360;
 }
 
 /** Ring and swatch colour. */

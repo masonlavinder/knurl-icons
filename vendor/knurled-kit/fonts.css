@@ -1,0 +1,13 @@
+/* @knurled/kit — fonts.css
+   Self-hosted. No CDN link, no third-party request on page load.
+   Latin subset only, and only the weights the type scale actually uses:
+   400 body and labels, 700 headings and chips.
+
+   One family. The scale used to name Geist and Geist Mono, neither of which
+   was ever loaded — no @font-face, no dependency — so the site rendered in
+   the OS default sans while these files downloaded and painted nothing.
+   Inconsolata is now the whole voice, which is what the mono microtype and
+   the spec-sheet copy register were always reaching for. */
+
+@import '@fontsource/inconsolata/latin-400.css';
+@import '@fontsource/inconsolata/latin-700.css';

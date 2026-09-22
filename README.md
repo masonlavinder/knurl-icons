@@ -12,10 +12,13 @@ pnpm dev              # http://localhost:5173
 
 ```bash
 pnpm typecheck        # tsc --noEmit, strict
+pnpm lint             # eslint
+pnpm lint:css         # the studio design rules — chamfers, tokens, no faked light
 pnpm test             # unit tests (fast, no corpus needed)
 pnpm corpus:fetch     # download the pinned upstream corpus into .cache/
 pnpm test:all         # unit + corpus gates (~18s)
 pnpm corpus:drift     # byte-identity report against upstream
+pnpm kit:check        # verify the vendored studio kit matches upstream
 node scripts/check-m0.mjs   # M0 gate, in a real browser (dev server must be up)
 ```
 
@@ -29,6 +32,7 @@ src/core/     pure. no react, no zustand, no DOM. node-testable, worker-movable.
   io/         SVG import + deterministic serializer
   render/     element -> tag/attrs, shared by the serializer AND the canvas
   commands/   command + history types, delete semantics
+src/brand/    the studio lockup, knurl, footer + the one substrate deviation
 src/store/    zustand stores: document, selection, view
 src/ui/       canvas layers, panels, keyboard
 src/platform/ DOM/XML adapters injected into core (browser + node)
@@ -37,6 +41,27 @@ src/platform/ DOM/XML adapters injected into core (browser + node)
 `src/core/**` must never import React, zustand, or touch `window`/`document`.
 That constraint is what makes moving the pipeline into a worker later a
 `postMessage` wrapper rather than a rewrite.
+
+## Brand
+
+`KS-003` in the studio catalog. The design system comes from `@knurled/kit` in
+the [knurled-studio][studio] monorepo, mirrored into `vendor/knurled-kit`
+because a GitHub repository can publish only one Pages site and that repo
+already publishes `knurled.studio` — see [vendor/knurled-kit/README.md] for
+what that costs and how to stay current. `vendor/knurled-kit/stylelint-config.js`
+is mirrored along with it, so a banned `border-radius` fails the build here for
+the same reason it does there.
+
+The tokens, type, chamfer, knurl and 4px grid are the studio's, unmodified.
+There is exactly one deviation and it lives in `src/brand/instrument.css`: the
+studio is light — "one theme, and it is light" — and this is not. An icon is
+judged against the ground it will sit on, so the editor keeps a dark work
+surface. What that file does is repoint the *semantic aliases* at the dark end
+of the same ink ramp, which is why `patterns.css` is consumed verbatim and every
+fragment in it comes out correct without an override.
+
+[studio]: https://github.com/masonlavinder/knurled-studio
+[vendor/knurled-kit/README.md]: vendor/knurled-kit/README.md
 
 ## Document model
 
@@ -109,7 +134,9 @@ expect from a control that just added something visible.
 ## Status
 
 **M0, the parser/serializer core, and a working editor** — 38/38 browser checks
-against the running app, 36 unit and corpus tests, strict typecheck clean.
+against the running app, 27 unit tests, strict typecheck and design-rule lint
+clean. Deployed to [icons.knurled.studio](https://icons.knurled.studio) from
+`main` on every push.
 
 Still to come, in plan order: the full import normalizer with transform
 flattening and `<use>`/CSS resolution (M1), the remaining authoring tools — pen,

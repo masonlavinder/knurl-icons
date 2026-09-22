@@ -1,0 +1,82 @@
+@layer components {
+  .footer {
+    flex: none;
+    width: 100%;
+  }
+
+  /* The bar carries its own gutter so the knurl strip above it runs edge to
+     edge. Tighter than the studio's --gutter: this is a status plate on an
+     instrument, not a page band. */
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-6);
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface-panel);
+  }
+
+  .identity {
+    composes: row from '../../vendor/knurled-kit/patterns.css';
+
+    gap: var(--space-2);
+  }
+
+  .name {
+    composes: monoValue from '../../vendor/knurled-kit/patterns.css';
+  }
+
+  .home {
+    composes: monoValue from '../../vendor/knurled-kit/patterns.css';
+    composes: fade from '../../vendor/knurled-kit/patterns.css';
+
+    /* Verdigris, because this link leaves the tool. A reader should be able
+       to tell from colour alone whether a click stays home. */
+    color: var(--text-external);
+    text-decoration: none;
+  }
+
+  .home:hover {
+    color: var(--text-primary);
+  }
+
+  .partNumber {
+    composes: partNumber from '../../vendor/knurled-kit/patterns.css';
+
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  /* Square at this size. A 10px chamfer would read as a nick, not a cut. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px var(--space-2) 3px;
+    border: var(--edge-weight) solid currentcolor;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    line-height: 1;
+    letter-spacing: var(--track-chip);
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--text-external);
+  }
+
+  /* The press control strip: a solid patch of every ink, butted together the
+     way a colour bar is printed on the trim edge of packaging. The separators
+     are the strip's own ground showing through a 1px grid gap. */
+  .inks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    padding: 1px;
+    background: var(--edge);
+  }
+
+  .patch {
+    width: var(--patch-size);
+    height: var(--patch-size);
+    background: var(--ink);
+  }
+}
