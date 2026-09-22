@@ -23,9 +23,9 @@ type ViewState = {
 
   setViewBox: (vb: ViewBox) => void;
   setZoom: (zoom: number) => void;
-  zoomBy: (factor: number, centre: { x: number; y: number }) => void;
+  zoomBy: (factor: number, center: { x: number; y: number }) => void;
   /** Zoom about the middle of the current view — what a toolbar button wants. */
-  zoomAtCentre: (factor: number) => void;
+  zoomAtCenter: (factor: number) => void;
   panBy: (dx: number, dy: number) => void;
   reset: () => void;
   toggleGrid: () => void;
@@ -112,16 +112,16 @@ export const useViewStore = create<ViewState>((set, get) => ({
     set({ zoom });
   },
 
-  zoomBy: (factor, centre) => {
+  zoomBy: (factor, center) => {
     const vb = get().viewBox;
     const w = Math.min(MAX_W, Math.max(MIN_W, vb.w / factor));
     // Keep the point under the cursor fixed.
-    const kx = (centre.x - vb.x) / vb.w;
-    const ky = (centre.y - vb.y) / vb.h;
-    set({ viewBox: clamp({ x: centre.x - kx * w, y: centre.y - ky * w, w, h: w }) });
+    const kx = (center.x - vb.x) / vb.w;
+    const ky = (center.y - vb.y) / vb.h;
+    set({ viewBox: clamp({ x: center.x - kx * w, y: center.y - ky * w, w, h: w }) });
   },
 
-  zoomAtCentre: (factor) => {
+  zoomAtCenter: (factor) => {
     const vb = get().viewBox;
     get().zoomBy(factor, { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 });
   },

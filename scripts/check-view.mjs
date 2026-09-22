@@ -48,7 +48,7 @@ const mid = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 const SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16"/></svg>`;
 await p.setInputFiles('input[type=file]', { name: 'test-square.svg', mimeType: 'image/svg+xml', buffer: Buffer.from(SVG) });
 await p.waitForTimeout(250);
-const code = await p.locator('.code').inputValue();
+const code = await p.locator('.code-input').inputValue();
 ok('Open loads a file into the document', code.includes('<rect'), code.split('\n').find((l) => l.includes('rect'))?.trim());
 ok('Open names the document from the file', (await p.locator('.readout').last().textContent()).includes('Open'));
 
@@ -125,10 +125,44 @@ ok('clicking the background still clears it', (await p.locator('.element-list .r
 // -- copy out of the SVG panel ---------------------------------------------
 await p.getByRole('button', { name: 'Copy' }).click();
 const clip = await p.evaluate(() => navigator.clipboard.readText());
-ok('Copy puts the panel text on the clipboard', clip === (await p.locator('.panel-code .code').inputValue()));
-ok('Copy says so', (await p.locator('.btn-head').textContent()) === 'Copied');
+ok('Copy puts the panel text on the clipboard', clip === (await p.locator('.panel-code .code-input').inputValue()));
+ok('Copy says so', (await p.locator('.btn-copy').textContent()) === 'Copied');
 await p.waitForTimeout(1400);
-ok('Copy goes back to normal', (await p.locator('.btn-head').textContent()) === 'Copy');
+ok('Copy goes back to normal', (await p.locator('.btn-copy').textContent()) === 'Copy');
+
+// -- locked markers --------------------------------------------------------
+const lock = await p.evaluate(() => {
+  const ta = document.querySelector('.code-input');
+  const pre = document.querySelector('.code-marks');
+  const a = ta.getBoundingClientRect();
+  const b = pre.getBoundingClientRect();
+  const ca = getComputedStyle(ta);
+  const cb = getComputedStyle(pre);
+  const same = (k) => ca[k] === cb[k];
+  const marks = [...document.querySelectorAll('.locked')].map((m) => m.textContent);
+  return {
+    marks,
+    aligned:
+      Math.abs(a.x - b.x) < 0.5 &&
+      Math.abs(a.y - b.y) < 0.5 &&
+      Math.abs(a.width - b.width) < 0.5 &&
+      ta.scrollHeight === pre.scrollHeight &&
+      same('fontFamily') && same('fontSize') && same('lineHeight') &&
+      same('paddingTop') && same('paddingLeft') &&
+      same('whiteSpace') && same('wordBreak'),
+    // the overlay must never eat a click meant for the editor
+    inert: getComputedStyle(pre).pointerEvents === 'none',
+  };
+});
+ok('the locked overlay lines up with the editor exactly', lock.aligned);
+ok('the overlay cannot be clicked', lock.inert);
+ok('stroke-width is marked as locked', lock.marks.some((m) => m.startsWith('stroke-width=')), lock.marks.length + ' marks');
+ok('the geometry below is not marked', !lock.marks.some((m) => m.startsWith('d=') || m.startsWith('cx=')));
+
+// typing still works with the overlay on top
+await p.locator('.code-input').fill('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="20" y2="20"/></svg>');
+await p.waitForTimeout(600);
+ok('the panel still applies what is typed under the overlay', (await p.locator('.element-list .row').count()) === 1);
 
 // -- collapsing rails ------------------------------------------------------
 const ws = p.locator('.workspace');

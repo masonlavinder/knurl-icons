@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { serialize } from '../../core/io/export/serialize.ts';
 import { parseSvg } from '../../core/io/import/parseSvg.ts';
 import type { Diagnostic } from '../../core/result.ts';
 import { useDocStore } from '../../store/docStore.ts';
+import { CollapseButton, type CollapseProps } from '../Chevron.tsx';
+import { lockedSpans } from './lockedSpans.ts';
 
 /** Quiet period after typing stops before the text is re-imported. */
 const SETTLE_MS = 350;
@@ -23,7 +25,7 @@ const COPIED_MS = 1200;
  * Either way the import commits as a single history entry, so a bad paste is one
  * undo rather than forty.
  */
-export function CodePanel(): React.JSX.Element {
+export function CodePanel({ onCollapse }: CollapseProps): React.JSX.Element {
   const doc = useDocStore((s) => s.doc);
   const replace = useDocStore((s) => s.replace);
 
@@ -35,6 +37,30 @@ export function CodePanel(): React.JSX.Element {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const marksRef = useRef<HTMLPreElement>(null);
+
+  /**
+   * The draft, cut into plain text and marked runs.
+   *
+   * Rebuilt from the draft rather than the document so the marks track what is
+   * on screen while an edit is still settling.
+   */
+  const marks = useMemo(() => {
+    const spans = lockedSpans(draft);
+    const out: React.ReactNode[] = [];
+    let at = 0;
+    spans.forEach((span, i) => {
+      if (span.start > at) out.push(draft.slice(at, span.start));
+      out.push(
+        <mark className="locked" data-kind={span.kind} title={span.note} key={i}>
+          {draft.slice(span.start, span.end)}
+        </mark>,
+      );
+      at = span.end;
+    });
+    out.push(draft.slice(at));
+    return out;
+  }, [draft]);
 
   // Follow the document unless the user is mid-edit.
   useEffect(() => {
@@ -102,17 +128,33 @@ export function CodePanel(): React.JSX.Element {
         <span>SVG</span>
         <div className="panel-head-actions">
           {dirty && <span className="dirty">applying…</span>}
-          <button type="button" className="btn-head" onClick={copy}>
+          <button type="button" className="btn-head btn-copy" onClick={copy}>
             {copied ? 'Copied' : 'Copy'}
           </button>
+          <CollapseButton onCollapse={onCollapse} side="right" />
         </div>
       </div>
 
-      <textarea
-        className="code"
+      {/* The overlay and the textarea are the same text in the same box. The
+          textarea keeps the caret and the editing; the <pre> underneath does
+          the marking, because a textarea cannot style a range of its own
+          value. They must not drift: identical font, size, line-height,
+          padding and wrapping, and the scroll is mirrored on every scroll. */}
+      <div className="code-wrap">
+        <pre className="code code-marks" aria-hidden="true" ref={marksRef}>
+          {marks}
+        </pre>
+        <textarea
+          className="code code-input"
         spellCheck={false}
         value={draft}
         aria-label="SVG source"
+        onScroll={(e) => {
+          const el = marksRef.current;
+          if (!el) return;
+          el.scrollTop = e.currentTarget.scrollTop;
+          el.scrollLeft = e.currentTarget.scrollLeft;
+        }}
         onChange={(e) => {
           setDraft(e.target.value);
           setDirty(true);
@@ -133,7 +175,24 @@ export function CodePanel(): React.JSX.Element {
         onBlur={() => {
           if (dirty) schedule(draft, 0);
         }}
-      />
+        />
+      </div>
+
+      {/* Says what the marking means. Without it a tinted run is decoration. */}
+      <dl className="lock-legend">
+        <div>
+          <dt>
+            <span className="locked-key" data-kind="spec" />
+          </dt>
+          <dd>house spec, document-wide — checked, not enforced</dd>
+        </div>
+        <div>
+          <dt>
+            <span className="locked-key" data-kind="fixed" />
+          </dt>
+          <dd>fixed by the model — retyped on every round-trip</dd>
+        </div>
+      </dl>
 
       {error && <p className="diag diag-error">{error}</p>}
       {diagnostics.map((d, i) => (

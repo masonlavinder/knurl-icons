@@ -57,7 +57,7 @@ export function useKeyboard(): void {
         return;
       }
 
-      // Centre whatever is selected on the canvas (the whole icon if nothing is).
+      // Center whatever is selected on the canvas (the whole icon if nothing is).
       if (mod && e.key.toLowerCase() === 'e') {
         e.preventDefault();
         doc.dispatch(centerSelection(doc.doc, sel.selection.addrs));

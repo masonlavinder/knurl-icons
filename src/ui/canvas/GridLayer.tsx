@@ -76,8 +76,8 @@ export function GridLayer(): React.JSX.Element {
           <rect x={2} y={2} width={20} height={20} />
           <rect x={4} y={2} width={16} height={20} />
           <rect x={2} y={4} width={20} height={16} />
-          {/* Crosshairs through the centre: the reference every symmetric icon
-              is built against, and the thing you align to when centring. */}
+          {/* Crosshairs through the center: the reference every symmetric icon
+              is built against, and the thing you align to when centering. */}
           <g className="keyline-cross">
             <line x1={CANVAS / 2} y1={0} x2={CANVAS / 2} y2={CANVAS} />
             <line x1={0} y1={CANVAS / 2} x2={CANVAS} y2={CANVAS / 2} />

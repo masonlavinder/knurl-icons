@@ -12,6 +12,7 @@ import { useKeyboard } from './ui/hooks/useKeyboard.ts';
 import { CodePanel } from './ui/panels/CodePanel.tsx';
 import { ConformancePanel } from './ui/panels/ConformancePanel.tsx';
 import { ElementListPanel } from './ui/panels/ElementListPanel.tsx';
+import { Chevron } from './ui/Chevron.tsx';
 
 /** One toolbar click of zoom. Matches roughly two wheel notches. */
 const ZOOM_STEP = 1.4;
@@ -55,49 +56,30 @@ export default function App(): React.JSX.Element {
 }
 
 /**
- * A rail: the strip on a panel's inner edge that collapses and reopens it.
+ * A collapsed panel.
  *
- * The chevron always points the way the panel will move, which is the only
- * reading of it that survives being on both sides of the screen at once.
- * Drawn to the house icon spec — 24x24, stroke 2, round cap and join — because
- * a hand-rolled glyph in an icon editor would be embarrassing.
+ * Not a rail bolted to the side of the workspace: it is the panel, narrowed.
+ * It keeps the panel's surface, its head band and the rule under it, and sets
+ * the panel's own name down the strip — so the closed state reads as the same
+ * object as the open one rather than as a new piece of furniture. Clicking
+ * anywhere on it opens it, because a 22px target for a chevron alone is mean.
  */
-function Rail({
+function CollapsedPanel({
   side,
-  open,
-  onToggle,
+  label,
+  onExpand,
 }: {
   side: 'left' | 'right';
-  open: boolean;
-  onToggle: () => void;
+  label: string;
+  onExpand: () => void;
 }): React.JSX.Element {
-  const label = `${open ? 'Collapse' : 'Expand'} the ${side} panel`;
-  // Open, it points outward to fold the panel away; closed, back toward the
-  // canvas to bring it out.
-  const pointsLeft = side === 'left' ? open : !open;
-
+  const title = `Expand the ${side} panel`;
   return (
-    <button
-      type="button"
-      className="rail"
-      data-point={pointsLeft ? 'left' : 'right'}
-      aria-expanded={open}
-      aria-label={label}
-      title={label}
-      onClick={onToggle}
-    >
-      <svg
-        className="rail-chev"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="m9 18 6-6-6-6" />
-      </svg>
+    <button type="button" className="panel panel-collapsed" title={title} aria-label={title} aria-expanded={false} onClick={onExpand}>
+      <span className="panel-head">
+        <Chevron direction={side === 'left' ? 'right' : 'left'} />
+      </span>
+      <span className="panel-collapsed-label">{label}</span>
     </button>
   );
 }
@@ -114,11 +96,14 @@ function Workspace(): React.JSX.Element {
       data-left={leftOpen ? 'open' : 'closed'}
       data-right={rightOpen ? 'open' : 'closed'}
     >
+      {/* Unmounted rather than hidden: the panels subscribe to the document,
+          and a collapsed one has no business re-rendering on every drag. */}
       <aside className="col col-left">
-        {/* Unmounted rather than hidden: the panels subscribe to the document,
-            and a collapsed one has no business re-rendering on every drag. */}
-        {leftOpen ? <ElementListPanel /> : null}
-        <Rail side="left" open={leftOpen} onToggle={toggleLeft} />
+        {leftOpen ? (
+          <ElementListPanel onCollapse={toggleLeft} />
+        ) : (
+          <CollapsedPanel side="left" label="Elements" onExpand={toggleLeft} />
+        )}
       </aside>
 
       <main className="col col-canvas">
@@ -126,13 +111,14 @@ function Workspace(): React.JSX.Element {
       </main>
 
       <aside className="col col-right">
-        <Rail side="right" open={rightOpen} onToggle={toggleRight} />
         {rightOpen ? (
           <div className="col-stack">
-            <CodePanel />
+            <CodePanel onCollapse={toggleRight} />
             <ConformancePanel />
           </div>
-        ) : null}
+        ) : (
+          <CollapsedPanel side="right" label="SVG" onExpand={toggleRight} />
+        )}
       </aside>
     </div>
   );
@@ -150,7 +136,7 @@ function Toolbar(): React.JSX.Element {
   const showKeylines = useViewStore((s) => s.showKeylines);
   const toggleGrid = useViewStore((s) => s.toggleGrid);
   const toggleKeylines = useViewStore((s) => s.toggleKeylines);
-  const zoomAtCentre = useViewStore((s) => s.zoomAtCentre);
+  const zoomAtCenter = useViewStore((s) => s.zoomAtCenter);
   const reset = useViewStore((s) => s.reset);
   const count = useSelectionStore((s) => s.selection.addrs.length);
 
@@ -242,7 +228,7 @@ function Toolbar(): React.JSX.Element {
         <button
           type="button"
           className="btn-icon"
-          onClick={() => zoomAtCentre(1 / ZOOM_STEP)}
+          onClick={() => zoomAtCenter(1 / ZOOM_STEP)}
           disabled={viewW >= ZOOM_LIMITS.MAX_W - 1e-9}
           aria-label="Zoom out"
           title="Zoom out"
@@ -252,7 +238,7 @@ function Toolbar(): React.JSX.Element {
         <button
           type="button"
           className="btn-icon"
-          onClick={() => zoomAtCentre(ZOOM_STEP)}
+          onClick={() => zoomAtCenter(ZOOM_STEP)}
           disabled={viewW <= ZOOM_LIMITS.MIN_W + 1e-9}
           aria-label="Zoom in"
           title="Zoom in"

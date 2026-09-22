@@ -32,7 +32,7 @@
     composes: fade from '../../vendor/knurled-kit/patterns.css';
 
     /* Verdigris, because this link leaves the tool. A reader should be able
-       to tell from colour alone whether a click stays home. */
+       to tell from color alone whether a click stays home. */
     color: var(--text-external);
     text-decoration: none;
   }
@@ -42,7 +42,7 @@
   }
 
   /* The press control strip: a solid patch of every ink, butted together the
-     way a colour bar is printed on the trim edge of packaging. The separators
+     way a color bar is printed on the trim edge of packaging. The separators
      are the strip's own ground showing through a 1px grid gap. */
   .inks {
     display: flex;

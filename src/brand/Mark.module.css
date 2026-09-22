@@ -4,7 +4,7 @@
 
      Mirrors the kit's Mark. The one change is the face, which takes the panel
      it sits on rather than --surface-page: the header here is a panel, and a
-     glyph carrying the page colour would read as a hole cut through it. */
+     glyph carrying the page color would read as a hole cut through it. */
   .shell {
     composes: chamferShell from '../../vendor/knurled-kit/patterns.css';
 

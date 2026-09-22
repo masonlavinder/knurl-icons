@@ -13,7 +13,7 @@
    adaptation rather than a second design system — patterns.css is imported
    verbatim and every fragment in it (chamferFace, hairline, monoLabel, knurl)
    comes out correct on the dark substrate without a single override, because
-   each one reads the alias rather than the raw colour.
+   each one reads the alias rather than the raw color.
 
    Layer note: `instrument` is not in global.css's @layer statement, so it is
    appended after every declared layer and wins on specificity ties. That is
@@ -61,9 +61,21 @@
        equivalent is the accent at low alpha. */
     --surface-accent: var(--lavinder-600);
     --surface-tint:   #A87BD41F;
+
+    /* An OPAQUE hover face. --surface-tint is translucent, which is what makes
+       it safe over a panel — but a two-layer chamfer paints the face on top of
+       the rim, so a translucent face lets the rim color flood the whole
+       control and the cut stops reading as an edge. One step up the ramp from
+       --surface-raise, and it hides whatever is behind it. */
+    --surface-hover:  #35352F;
+
+    /* Panel head band. One token because an open panel's head and a collapsed
+       panel's have to sit on the same line across the workspace, and two
+       numbers that must agree are one number. */
+    --head-height: 30px;
     --text-on-accent: var(--paper);
 
-    /* ---- signal colours -------------------------------------------- */
+    /* ---- signal colors -------------------------------------------- */
     /* Not brand hues, and they exist only here. The studio's pages have
        nothing to report; a conformance panel does, and red/amber/green is
        the one convention it would be perverse to reinvent in purple. Warmed
@@ -103,7 +115,7 @@
     --edge-weight: 1px;
 
     /* Chamfered surfaces clip an outline away, so the focus ring is an inset
-       box-shadow. One token, because the ring colour has to track the accent
+       box-shadow. One token, because the ring color has to track the accent
        onto the dark substrate and patterns.css hardcodes lavinder-600. */
     --focus-ring: var(--lavinder-400);
   }

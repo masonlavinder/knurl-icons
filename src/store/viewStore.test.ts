@@ -42,7 +42,7 @@ describe('view clamping', () => {
   it('survives a pan at full zoom in and full zoom out', () => {
     for (const factor of [1 / 1000, 1000]) {
       useViewStore.getState().reset();
-      useViewStore.getState().zoomAtCentre(factor);
+      useViewStore.getState().zoomAtCenter(factor);
       useViewStore.getState().panBy(1e6, 1e6);
       assertVisible();
       useViewStore.getState().panBy(-1e6, -1e6);
@@ -66,7 +66,7 @@ describe('view clamping', () => {
       return seed / 2147483648;
     };
     for (let i = 0; i < 2000; i += 1) {
-      if (i % 5 === 0) useViewStore.getState().zoomAtCentre(rand() < 0.5 ? 0.8 : 1.25);
+      if (i % 5 === 0) useViewStore.getState().zoomAtCenter(rand() < 0.5 ? 0.8 : 1.25);
       else useViewStore.getState().panBy((rand() - 0.5) * 200, (rand() - 0.5) * 200);
       assertVisible();
     }
@@ -75,7 +75,7 @@ describe('view clamping', () => {
   it('can still reach every edge of the icon when zoomed in', () => {
     useViewStore.getState().reset();
     // Down to a quarter of the artboard in view.
-    useViewStore.getState().zoomAtCentre(4);
+    useViewStore.getState().zoomAtCenter(4);
     const w = useViewStore.getState().viewBox.w;
     expect(w).toBeCloseTo(CANVAS / 4);
 
@@ -93,7 +93,7 @@ describe('view clamping', () => {
 
   it('keeps the whole artboard on screen once zoomed out past it', () => {
     useViewStore.getState().reset();
-    useViewStore.getState().zoomAtCentre(1 / 4);
+    useViewStore.getState().zoomAtCenter(1 / 4);
     const corners: [number, number][] = [
       [1e6, 1e6],
       [-1e6, -1e6],
@@ -111,7 +111,7 @@ describe('view clamping', () => {
   it('never lets the view invert or escape the zoom range', () => {
     useViewStore.getState().reset();
     for (const factor of [1e9, 1e-9]) {
-      useViewStore.getState().zoomAtCentre(factor);
+      useViewStore.getState().zoomAtCenter(factor);
       const { w, h } = useViewStore.getState().viewBox;
       expect(w).toBeGreaterThan(0);
       expect(w).toBe(h);

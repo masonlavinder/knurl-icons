@@ -35,7 +35,7 @@ export function controlsOf(el: Element): ControlPoint[] {
       ];
     case 'circle':
     case 'ellipse':
-      return [{ id: asId('c'), p: el.c, label: 'Centre', field: 'c' }];
+      return [{ id: asId('c'), p: el.c, label: 'Center', field: 'c' }];
     default:
       return [];
   }

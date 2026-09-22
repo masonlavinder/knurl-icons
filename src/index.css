@@ -1,9 +1,9 @@
 /* knurl-icons — index.css
 
-   Colour, type, spacing and geometry all come from the studio token layer:
+   Color, type, spacing and geometry all come from the studio token layer:
    vendor/knurled-kit/tokens.css defines them, src/brand/instrument.css
    repoints the semantic aliases at the dark end of the same ramp. There is no
-   local palette here any more — a second set of names for the same colours is
+   local palette here any more — a second set of names for the same colors is
    exactly the drift the token layer exists to prevent.
 
    Chamfers, not rounded corners. Depth is hairline ink rules and flat surface
@@ -86,8 +86,21 @@ button:disabled {
                  than a button, stamped in the accent when it is on.
      · icon    — a glyph, not a word. Square footprint so a row of them keeps
                  its rhythm.
-   The chamfer is on all three, because it is the banner that wears it. */
+   The chamfer is on all three, because it is the banner that wears it.
+
+   Two layers, and it has to be two: clip-path clips a border away, so the
+   diagonal had no edge to change color and a hover lit the four straight
+   sides while the cut stayed dark. The button itself is the rim — a solid
+   fill, clipped — and ::before is the face, inset by --edge-weight and
+   clipped to a chamfer smaller by the same amount so the rim is even all the
+   way round the corner. Same construction as the kit's Panel and Mark. */
 .toolbar button {
+  position: relative;
+  isolation: isolate;
+  border: none;
+  padding: 5px 11px;
+  background: var(--edge);
+
   --chamfer: var(--chamfer-sm);
 
   clip-path: polygon(
@@ -100,16 +113,51 @@ button:disabled {
   );
 }
 
+.toolbar button::before {
+  content: '';
+  position: absolute;
+  inset: var(--edge-weight);
+  z-index: -1;
+  background: var(--surface-raise);
+  transition: background-color var(--dur-detent) var(--ease-out);
+
+  clip-path: polygon(
+    calc(var(--chamfer) - var(--edge-weight)) 0,
+    100% 0,
+    100% calc(100% - var(--chamfer) + var(--edge-weight)),
+    calc(100% - var(--chamfer) + var(--edge-weight)) 100%,
+    0 100%,
+    0 calc(var(--chamfer) - var(--edge-weight))
+  );
+}
+
+/* Rim and face move together, so the cut lights up with the rest of it. */
+.toolbar button:hover:not(:disabled) {
+  background: var(--text-accent);
+  color: var(--text-accent);
+}
+
+.toolbar button:hover:not(:disabled)::before {
+  background: var(--surface-hover);
+}
+
+/* A toggle is flat at rest — rim only — so it reads as a switch rather than
+   as something that will do a thing when pressed. The face takes the panel
+   color rather than `none`: it sits ON TOP of the rim, so transparent would
+   mean the rim floods the control instead of outlining it. */
 .toolbar .btn-toggle {
-  background: none;
   color: var(--text-muted);
+}
+
+.toolbar .btn-toggle::before {
+  background: var(--surface-panel);
 }
 
 .toolbar .btn-icon {
   display: grid;
   place-items: center;
   width: 26px;
-  padding: 4px 0;
+  padding: 5px 0;
   font-size: var(--text-base);
   line-height: 1;
 
@@ -130,6 +178,11 @@ button[aria-pressed='true'],
   color: var(--text-on-accent);
 }
 
+.toolbar .btn-toggle[aria-pressed='true']::before,
+.toolbar .btn-toggle[aria-pressed='true']:hover::before {
+  background: var(--surface-accent);
+}
+
 .toolbar .btn-toggle[aria-pressed='true']:hover {
   background: var(--surface-accent);
   color: var(--text-on-accent);
@@ -142,7 +195,7 @@ button[aria-pressed='true'],
 
 /* Toolbar status. Deliberately unlike a button: no face, no chamfer, mono and
    dim. The last-action label used to sit inline with Undo and Redo wearing the
-   same colour as their text, so "Open" read as a third button that did
+   same color as their text, so "Open" read as a third button that did
    nothing. */
 .readout {
   display: inline-flex;
@@ -182,7 +235,7 @@ button[aria-pressed='true'],
   /* Panel widths are variables so collapsing is one substitution rather than a
      second grid definition. They also shrink before they collapse: at 1100px
      the pair of them would otherwise take two thirds of the window. */
-  --rail: 22px;
+  --rail: 26px;
   --panel-left: clamp(220px, 22vw, 300px);
   --panel-right: clamp(260px, 26vw, 340px);
 
@@ -234,45 +287,75 @@ button[aria-pressed='true'],
   min-height: 0;
 }
 
-/* --------------------------------------------------------- collapse rail */
+/* ----------------------------------------------------- collapsed panel */
 
-.rail {
-  flex: 0 0 var(--rail);
+/* A collapsed panel is the panel, narrowed — not a rail bolted to the side of
+   the workspace. It keeps the surface, the head band and the rule under it, so
+   the closed state reads as the same object as the open one. The whole strip
+   is the hit target: 22px is a mean thing to ask someone to hit twice. */
+.panel-collapsed {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: var(--space-2) 0 0;
-  background: var(--surface-page);
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
   border: none;
-  border-left: var(--hairline);
+  background: var(--surface-panel);
   color: var(--text-muted);
 }
 
-.col-right .rail {
-  border-left: none;
-  border-right: var(--hairline);
+.panel-collapsed .panel-head {
+  justify-content: center;
+  padding: 0;
+  height: var(--head-height);
 }
 
-.rail:hover:not(:disabled) {
-  background: var(--surface-tint);
+.panel-collapsed:hover {
+  background: var(--surface-hover);
   color: var(--text-accent);
 }
 
-.rail-chev {
-  width: 14px;
-  height: 14px;
-  transition: transform var(--dur-detent) var(--ease-out);
+/* The panel's own name, set down the strip. Sideways is what makes the closed
+   state still say which panel it is, which a bare chevron cannot. */
+.panel-collapsed-label {
+  writing-mode: vertical-rl;
+  margin: var(--space-3) auto 0;
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
 }
 
-.rail[data-point='left'] .rail-chev {
+.chev {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.chev[data-point='left'] {
   transform: rotate(180deg);
 }
 
+/* The collapse control in an open panel's head. Quiet, and square like every
+   other small control. */
+.btn-collapse {
+  display: grid;
+  place-items: center;
+  padding: 2px;
+}
+
+
 .col-canvas {
   background: var(--canvas-face);
-  padding: 16px;
+  padding: var(--space-4);
   align-items: center;
   justify-content: center;
+
+  /* The artboard is the largest square that fits THIS box, so the box has to
+     be measurable. A size container exposes both of its content-box axes as
+     cqw/cqh, which is the only way to say "min(my width, my height)" in CSS
+     without guessing at one of them. */
+  container-type: size;
 }
 
 .panel {
@@ -287,6 +370,8 @@ button[aria-pressed='true'],
   display: flex;
   justify-content: space-between;
   align-items: center;
+  /* Fixed, so a collapsed panel's head band lines up with its neighbour's. */
+  height: var(--head-height);
   padding: var(--space-2) var(--space-3);
   border-bottom: var(--hairline);
   font-weight: 700;
@@ -318,7 +403,18 @@ button[aria-pressed='true'],
 /* ---------------------------------------------------------- canvas */
 
 .canvas {
-  width: min(100%, 78vh);
+  /* The largest square the column can hold.
+     ---------------------------------------------------------------------
+     This used to be min(100%, 78vh): width-bound, with a guess at the
+     height. The guess was wrong in both directions. On a portrait screen
+     the column is far taller than 78vh is generous, so a 1200x1920 window
+     drew a 592px artboard inside a 624x1840 column and left 1200px of
+     empty ground under it. And 78vh is measured against the viewport, not
+     the column, so it never noticed the toolbar wrapping to three rows or
+     the side panels collapsing.
+     100cqh is the column's own content height. min() against 100% picks
+     whichever axis actually binds, which is the definition of fitting. */
+  width: min(100%, 100cqh);
   aspect-ratio: 1;
   touch-action: none;
   cursor: default;
@@ -488,14 +584,26 @@ button[aria-pressed='true'],
 
 /* ---------------------------------------------------------- code */
 
-.code {
+/* The editor and its marking overlay are stacked in one box. Everything that
+   affects where a glyph lands is declared once, on .code, and both layers take
+   it — the moment the two disagree about a font or a padding, the marks slide
+   off the text they are marking. */
+.code-wrap {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  background: var(--canvas-face);
+}
+
+.code {
+  position: absolute;
+  inset: 0;
+  margin: 0;
   resize: none;
   border: none;
   outline: none;
   padding: 10px;
-  background: var(--canvas-face);
+  background: none;
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 12px;
@@ -504,6 +612,67 @@ button[aria-pressed='true'],
   white-space: pre-wrap;
   word-break: break-word;
   overflow: auto;
+}
+
+/* Underneath, and not interactive: it exists to paint, and every pointer and
+   every caret belongs to the textarea on top. */
+.code-marks {
+  color: transparent;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The textarea's own text is what is read. Its background has to stay clear or
+   it would hide the marks. */
+.code-input {
+  background: none;
+}
+
+/* A locked attribute. Marked by a tinted ground rather than by recoloring the
+   text: the text still has to read as code, and tinting the run says "this
+   region is spoken for" without competing with the syntax. */
+.locked {
+  background: var(--surface-tint);
+  color: transparent;
+  box-decoration-break: clone;
+}
+
+/* What the model fixes outright gets a flatter ground than house spec, which
+   is merely checked. Two levels, because they are two different promises. */
+.locked[data-kind='fixed'] {
+  background: var(--canvas-hover);
+}
+
+.lock-legend {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-top: var(--hairline);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
+
+.lock-legend > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.lock-legend dt,
+.lock-legend dd {
+  margin: 0;
+}
+
+.locked-key {
+  display: block;
+  width: 16px;
+  height: 10px;
+  background: var(--surface-tint);
+}
+
+.locked-key[data-kind='fixed'] {
+  background: var(--canvas-hover);
 }
 
 .dirty {
@@ -536,7 +705,7 @@ button[aria-pressed='true'],
 /* ---------------------------------------------------------- brand */
 
 /* Mark and wordmark. The way home, so it behaves as a link — and the whole
-   lockup is one piece of text: it changes colour together or not at all. */
+   lockup is one piece of text: it changes color together or not at all. */
 .lockup {
   display: flex;
   align-items: center;
@@ -919,7 +1088,7 @@ button[aria-pressed='true'],
   fill: var(--text-accent);
 }
 
-/* The node itself stays dark and neutral. Colour lives entirely in the identity
+/* The node itself stays dark and neutral. Color lives entirely in the identity
    ring around it, so a path reads as geometry first and an index second. */
 .node-straight,
 .node-curved,
@@ -928,7 +1097,7 @@ button[aria-pressed='true'],
 }
 
 /* A selected node stays dark. Selection reads from the surrounding context
-   receding, not from the node changing colour -- recolouring it would fight the
+   receding, not from the node changing color -- recolouring it would fight the
    identity ring for the same few pixels. */
 .node-dot.is-selected {
   fill: var(--canvas-face);
@@ -1094,7 +1263,7 @@ button[aria-pressed='true'],
   cursor: pointer;
 }
 
-/* The colour-matched grab handle: same hue as this node's ring on the canvas,
+/* The color-matched grab handle: same hue as this node's ring on the canvas,
    so the two panels identify each other without labels on the drawing. */
 .node-grab {
   display: flex;

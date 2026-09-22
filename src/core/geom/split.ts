@@ -71,7 +71,7 @@ export type ArcSplit = { mid: Pt; first: ArcParams; second: ArcParams };
  * Split an elliptical arc without leaving arc space.
  *
  * Converting to cubics first would silently destroy the `A` command that 70% of
- * the corpus depends on, so the sweep is divided in the centre parameterization
+ * the corpus depends on, so the sweep is divided in the center parameterization
  * and only the large-arc flags are recomputed.
  */
 export function splitArc(p0: Pt, p1: Pt, a: ArcParams, t: number): ArcSplit | null {

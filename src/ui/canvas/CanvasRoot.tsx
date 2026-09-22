@@ -248,9 +248,9 @@ export function CanvasRoot(): React.JSX.Element {
 
   const onWheel = useCallback(
     (e: React.WheelEvent) => {
-      const centre = toUnits(e);
+      const center = toUnits(e);
       if (e.ctrlKey || e.metaKey) {
-        zoomBy(Math.exp(-e.deltaY / 200), centre);
+        zoomBy(Math.exp(-e.deltaY / 200), center);
       } else {
         const vb = useViewStore.getState().viewBox;
         const k = vb.w / 24;
@@ -441,7 +441,7 @@ function ElementChrome({
       {showNodes &&
         nodeListsOf(el).map((list, li) => {
           // Once a node is picked, the others recede rather than the picked one
-          // changing colour: dimming the context keeps the selected node the
+          // changing color: dimming the context keeps the selected node the
           // brightest thing on the canvas.
           const anyNodePicked = [...selectedKeys].some((k) => k.includes('/n:'));
           const segCount = list.closed ? list.nodes.length : list.nodes.length - 1;

@@ -127,9 +127,9 @@ record(
 await page.keyboard.press('Control+z');
 
 // --------------------------------------------------- delete at high zoom
-// Zoom in hard, re-centre on geometry, and confirm it is still grabbable: the
+// Zoom in hard, re-center on geometry, and confirm it is still grabbable: the
 // grab radius is max(strokeWidth, 10/zoom), so thin shapes must stay hittable.
-// Zoom centred ON the point we will click, so it stays under the cursor --
+// Zoom centered ON the point we will click, so it stays under the cursor --
 // otherwise the target simply scrolls out of the viewBox and the test measures
 // nothing but its own arithmetic.
 const anchor = await page.evaluate(() => {
@@ -199,7 +199,7 @@ record(
 );
 
 // ================================================================ UI notes
-console.log('\n-- panel behaviour --');
+console.log('\n-- panel behavior --');
 
 // 1. paste applies without needing a blur
 await page.reload({ waitUntil: 'networkidle' });
@@ -342,14 +342,14 @@ await page.waitForTimeout(200);
 const stillFilled = (await codeNow()).includes('fill="currentColor"');
 record('opening a shape clears its fill', filled && !stillFilled, `filled=${filled}, after open=${stillFilled}`);
 
-// centre hotkey
+// center hotkey
 await pasteInto('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/></svg>');
 await page.locator('.element-list .row-main').first().click();
 await page.keyboard.press('Control+e');
 await page.waitForTimeout(200);
-const centred = await codeNow();
-record('Ctrl+E centres the selection', centred.includes('cx="12"') && centred.includes('cy="12"'),
-  centred.match(/<circle[^>]*>/)?.[0] ?? '');
+const centered = await codeNow();
+record('Ctrl+E centres the selection', centered.includes('cx="12"') && centered.includes('cy="12"'),
+  centered.match(/<circle[^>]*>/)?.[0] ?? '');
 
 // grid discipline: every coordinate a drag produces must sit on the half grid
 await pasteInto('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polyline points="4 16 12 8 20 16"/></svg>');
@@ -385,10 +385,10 @@ await page.waitForTimeout(200);
 record('Add node appends to the run', (await page.locator('.node-row').count()) === beforeAdd2 + 1,
   `${beforeAdd2} -> ${await page.locator('.node-row').count()}`);
 
-// the colour handle selects its node
+// the color handle selects its node
 await page.locator('.node-grab').nth(1).click();
 await page.waitForTimeout(150);
-record('the colour handle selects its node', (await page.locator('.node-row.is-selected').count()) === 1);
+record('the color handle selects its node', (await page.locator('.node-row.is-selected').count()) === 1);
 record('canvas draws a matching identity ring per node', (await page.locator('.node-ring').count()) > 0);
 
 // arrow nudge moves by exactly half a unit

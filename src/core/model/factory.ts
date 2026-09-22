@@ -47,7 +47,7 @@ export function createElement(kind: ElementKind | 'polygon'): Element {
 export const ADDABLE: { kind: ElementKind | 'polygon'; label: string; hint: string }[] = [
   { kind: 'path', label: 'Path', hint: 'Bézier curve' },
   { kind: 'line', label: 'Line', hint: 'Two points' },
-  { kind: 'circle', label: 'Circle', hint: 'Centre and radius' },
+  { kind: 'circle', label: 'Circle', hint: 'Center and radius' },
   { kind: 'ellipse', label: 'Ellipse', hint: 'Two radii' },
   { kind: 'rect', label: 'Rectangle', hint: 'Optional corner radius' },
   { kind: 'polyline', label: 'Polyline', hint: 'Open run of points' },
