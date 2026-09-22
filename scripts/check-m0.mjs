@@ -145,7 +145,9 @@ for (let i = 0; i < 3; i++) {
   await page.waitForTimeout(40);
   await page.mouse.move(anchor.x, anchor.y);
 }
-const zoomText = (await page.locator('.toolbar [data-zoom]').textContent())?.trim();
+// The toolbar no longer prints a zoom figure, so read it off the thing that
+// actually carries it: a narrower viewBox is a closer zoom.
+const zoomText = `viewBox ${(await page.locator('.canvas').getAttribute('viewBox')) ?? '?'}`;
 const before = await rowCount();
 await clickUnits(2, 12);
 const selectedZoomed = await selCount();

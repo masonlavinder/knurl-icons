@@ -150,7 +150,6 @@ function Toolbar(): React.JSX.Element {
   const undo = useDocStore((s) => s.undo);
   const redo = useDocStore((s) => s.redo);
   const history = useDocStore((s) => s.history);
-  const zoom = useViewStore((s) => s.zoom);
   const viewW = useViewStore((s) => s.viewBox.w);
   const showGrid = useViewStore((s) => s.showGrid);
   const showKeylines = useViewStore((s) => s.showKeylines);
@@ -268,12 +267,6 @@ function Toolbar(): React.JSX.Element {
         <button type="button" onClick={reset}>
           Fit
         </button>
-        {/* data-zoom, not a positional selector: scripts/check-m0.mjs reads
-            this readout, and "the last .muted in the toolbar" broke the moment
-            another status field was added beside it. */}
-        <span className="readout" data-zoom>
-          {zoom.toFixed(1)}×
-        </span>
       </div>
 
       <div className="group right">

@@ -186,7 +186,8 @@ await p.getByRole('button', { name: /Expand the left/ }).click();
 await p.getByRole('button', { name: /Expand the right/ }).click();
 ok('both reopen', (await ws.getAttribute('data-left')) === 'open' && (await ws.getAttribute('data-right')) === 'open');
 
-// The handle lives on the seam, and does not move when the panel does.
+// The handle lives on the seam, in the head band, and does not move when the
+// panel does.
 const seam = await p.evaluate(() => {
   const read = (col) => {
     const c = document.querySelector(col).getBoundingClientRect();
@@ -196,13 +197,21 @@ const seam = await p.evaluate(() => {
         col === '.col-left'
           ? Math.abs(t.right - c.right) < 2
           : Math.abs(t.left - c.left) < 2,
-      midY: Math.round(t.top + t.height / 2 - (c.top + c.height / 2)),
+      // Level with the panel head: same top, same height.
+      headTop: Math.round(t.top - c.top),
+      headDelta: Math.round(
+        t.height - document.querySelector('.panel-head').getBoundingClientRect().height,
+      ),
     };
   };
   return { left: read('.col-left'), right: read('.col-right') };
 });
 ok('each handle sits on its panel\'s inner edge', seam.left.onInnerEdge && seam.right.onInnerEdge, JSON.stringify(seam));
-ok('each handle is vertically centred', Math.abs(seam.left.midY) <= 1 && Math.abs(seam.right.midY) <= 1);
+ok(
+  'each handle sits in the head band, level with the title',
+  seam.left.headTop === 0 && seam.right.headTop === 0 && seam.left.headDelta === 0 && seam.right.headDelta === 0,
+  JSON.stringify(seam),
+);
 ok('the left panel comes back', (await p.locator('.element-list').count()) === 1);
 
 // -- a portrait window is not a wall of chrome -----------------------------
@@ -223,6 +232,24 @@ ok('the canvas gets the window', narrow.canvas > 600, `${narrow.canvas}px`);
 await p.getByRole('button', { name: /Expand the left/ }).click();
 ok('a panel can still be opened when narrow', (await p.locator('.element-list').count()) === 1);
 ok('the handle is reachable in both states', (await p.locator('.edge-toggle').count()) === 2);
+
+// The handle is absolutely positioned over the head, so the head has to hold a
+// gap for it — the first time it moved up here it landed on the element count.
+const clear = await p.evaluate(() => {
+  const hit = (a, b) => a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom;
+  const clashes = [];
+  for (const col of ['.col-left', '.col-right']) {
+    const toggle = document.querySelector(`${col} .edge-toggle`);
+    if (!toggle) continue;
+    const t = toggle.getBoundingClientRect();
+    for (const el of document.querySelectorAll(`${col} .panel-head > *`)) {
+      if (hit(t, el.getBoundingClientRect())) clashes.push(`${col} ${el.textContent.trim()}`);
+    }
+  }
+  return clashes;
+});
+ok('the handle does not sit on any head content', clear.length === 0, clear.join(', '));
+ok('the toolbar prints no zoom figure', (await p.locator('.toolbar [data-zoom]').count()) === 0);
 
 ok('no console errors', errs.length === 0, errs.join(' | '));
 console.log(fails === 0 ? '\nall checks passed' : `\n${fails} FAILED`);

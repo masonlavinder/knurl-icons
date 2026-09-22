@@ -73,6 +73,11 @@
        panel's have to sit on the same line across the workspace, and two
        numbers that must agree are one number. */
     --head-height: 30px;
+
+    /* Width of the collapse handle on a panel's seam. The panel heads reserve
+       exactly this much on that side, so the grip never lands on a title or a
+       count — which is what it did the first time it moved up here. */
+    --edge-toggle-w: 16px;
     --text-on-accent: var(--paper);
 
     /* ---- signal colors -------------------------------------------- */

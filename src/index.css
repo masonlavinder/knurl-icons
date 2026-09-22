@@ -310,35 +310,48 @@ button[aria-pressed='true'],
 
 /* --------------------------------------------------------- edge handle */
 
-/* The grip sits ON the seam, because the seam is what moves. It stays in the
-   same place open or shut, so reopening is where closing was rather than
-   somewhere new. Half-height-centred: findable without hunting, and without
-   claiming the full height the way a rail did. */
+/* The grip sits ON the seam, because the seam is what moves — and at the top,
+   in the head band, level with the panel's title. --head-height is the same
+   token the head uses, so the two cannot drift apart and the handle's bottom
+   rule is a continuation of the head's own.
+
+   It stays put when the panel does: the handle is anchored to the column, not
+   to the panel inside it, so reopening is where closing was. */
 .edge-toggle {
   position: absolute;
-  top: 50%;
-  translate: 0 -50%;
+  top: 0;
   z-index: 2;
   display: grid;
   place-items: center;
-  width: 15px;
-  height: 46px;
+  width: var(--edge-toggle-w);
+  height: var(--head-height);
   padding: 0;
-  background: var(--surface-raise);
-  border: var(--hairline);
+  background: var(--surface-panel);
+  border: none;
+  border-bottom: var(--hairline);
   color: var(--text-muted);
 }
 
-/* Flush to the seam: the column already draws the rule there, so the handle
-   drops its own edge on that side and reads as part of it. */
+/* Flush to the seam. The column already draws the rule there, so the handle
+   takes no edge of its own on that side and reads as part of the divider.
+
+   Every head in the column reserves the width on that side, not just the
+   topmost one: the handle only covers the first, but indenting one head and
+   not the other would leave them out of line down the column. */
 .col-left .edge-toggle {
   right: 0;
-  border-right: none;
+}
+
+.col-left .panel-head {
+  padding-right: calc(var(--space-3) + var(--edge-toggle-w));
 }
 
 .col-right .edge-toggle {
   left: 0;
-  border-left: none;
+}
+
+.col-right .panel-head {
+  padding-left: calc(var(--space-3) + var(--edge-toggle-w));
 }
 
 .edge-toggle:hover:not(:disabled) {
@@ -351,10 +364,7 @@ button[aria-pressed='true'],
    state still say which panel it is, which a bare chevron cannot. */
 .panel-collapsed-label {
   writing-mode: vertical-rl;
-  /* Pushed off the middle so it does not run under the centred handle. */
   margin: var(--space-3) auto auto;
-  max-height: calc(50% - 40px);
-  overflow: hidden;
   font-size: var(--text-2xs);
   letter-spacing: var(--track-label);
   text-transform: uppercase;
