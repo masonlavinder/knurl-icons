@@ -4,22 +4,24 @@ import { CANVAS } from '../core/constants.ts';
 import { useViewStore } from './viewStore.ts';
 
 /**
- * The artboard is unlosable.
+ * The view and the artboard are always maximally overlapped.
  *
- * This is the property the clamp exists for, and it is not something you can
- * eyeball: a drag is hundreds of pan calls, a pinch interleaves pans and zooms,
- * and any one of them could walk the view off the edge. Every write goes
- * through one clamp, so the invariant is checkable here rather than in a
- * browser.
+ * Zoomed out that means the whole artboard is on screen; zoomed in it means
+ * the screen is nothing but artboard. Either way the overlap is the smaller of
+ * the two, which is as much as geometry allows — so the icon can never be cut
+ * off by panning.
+ *
+ * It is not something you can eyeball: a drag is hundreds of pan calls, a
+ * pinch interleaves pans and zooms, and any one of them could walk the view
+ * off the edge. Every write goes through one clamp, so the invariant is
+ * checkable here rather than in a browser.
  */
 const overlap = (a: number, len: number): number => Math.min(a + len, CANVAS) - Math.max(a, 0);
 
 function assertVisible(): void {
   const { x, y, w, h } = useViewStore.getState().viewBox;
-  // At either extreme of the pan range, exactly half the viewport is artboard.
-  // Anywhere in between it is more. Allow a float epsilon at the boundary.
-  expect(overlap(x, w)).toBeGreaterThanOrEqual(Math.min(w, CANVAS) / 2 - 1e-9);
-  expect(overlap(y, h)).toBeGreaterThanOrEqual(Math.min(h, CANVAS) / 2 - 1e-9);
+  expect(overlap(x, w)).toBeCloseTo(Math.min(w, CANVAS), 9);
+  expect(overlap(y, h)).toBeCloseTo(Math.min(h, CANVAS), 9);
 }
 
 describe('view clamping', () => {
@@ -105,6 +107,29 @@ describe('view clamping', () => {
       expect(y).toBeLessThanOrEqual(0);
       expect(x + w).toBeGreaterThanOrEqual(CANVAS);
       expect(y + h).toBeGreaterThanOrEqual(CANVAS);
+    }
+  });
+
+  it('does not move at all at fit — there is nowhere to go', () => {
+    useViewStore.getState().reset();
+    const before = useViewStore.getState().viewBox;
+    useViewStore.getState().panBy(500, -500);
+    expect(useViewStore.getState().viewBox).toEqual(before);
+  });
+
+  it('never shows ground beyond the artboard while zoomed in', () => {
+    useViewStore.getState().reset();
+    useViewStore.getState().zoomAtCenter(3);
+    for (const [dx, dy] of [
+      [1e6, 1e6],
+      [-1e6, -1e6],
+    ] as [number, number][]) {
+      useViewStore.getState().panBy(dx, dy);
+      const { x, y, w, h } = useViewStore.getState().viewBox;
+      expect(x).toBeGreaterThanOrEqual(-1e-9);
+      expect(y).toBeGreaterThanOrEqual(-1e-9);
+      expect(x + w).toBeLessThanOrEqual(CANVAS + 1e-9);
+      expect(y + h).toBeLessThanOrEqual(CANVAS + 1e-9);
     }
   });
 

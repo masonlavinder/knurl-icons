@@ -36,10 +36,12 @@ await p.goto(URL, { waitUntil: 'networkidle' });
 await p.waitForSelector('.canvas');
 
 const vb = async () => (await p.locator('.canvas').getAttribute('viewBox')).split(' ').map(Number);
+// Maximally overlapped: the whole artboard when it fits, nothing but artboard
+// when it does not. Anything less means the icon got cut off by a pan.
 const visible = ([x, y, w, h]) => {
   const ox = Math.min(x + w, 24) - Math.max(x, 0);
   const oy = Math.min(y + h, 24) - Math.max(y, 0);
-  return { ox, oy, need: Math.min(w, 24) / 2 };
+  return { ox, oy, need: Math.min(w, 24) };
 };
 const box = await p.locator('.canvas').boundingBox();
 const mid = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -82,14 +84,27 @@ const tight = visible(await vb());
 ok('the icon is still on screen at max zoom', tight.ox >= tight.need - 1e-6 && tight.oy >= tight.need - 1e-6, JSON.stringify(tight));
 
 // -- drag to pan -----------------------------------------------------------
+const drag = async (dx, dy) => {
+  await p.mouse.move(mid.x - dx / 2, mid.y - dy / 2);
+  await p.mouse.down();
+  await p.mouse.move(mid.x + dx / 2, mid.y + dy / 2, { steps: 20 });
+  await p.mouse.up();
+};
+
+// At fit the whole icon is already on screen, so a drag must do nothing —
+// that is the point of the clamp, not a broken gesture.
 await p.getByRole('button', { name: 'Fit' }).click();
+const atFit = await vb();
+await drag(600, 600);
+ok('dragging at fit does nothing — there is nowhere to go', (await vb()).join(' ') === atFit.join(' '), atFit.join(' '));
+
+// Zoomed in there is somewhere to go, and the drag has to get there.
+await p.getByRole('button', { name: 'Zoom in' }).click();
+await p.getByRole('button', { name: 'Zoom in' }).click();
 const start = await vb();
-await p.mouse.move(mid.x - 300, mid.y - 300);
-await p.mouse.down();
-await p.mouse.move(mid.x + 300, mid.y + 300, { steps: 20 });
-await p.mouse.up();
+await drag(600, 600);
 const panned = await vb();
-ok('dragging empty canvas pans the view', panned[0] !== start[0] || panned[1] !== start[1], `${start.join(' ')} -> ${panned.join(' ')}`);
+ok('dragging empty canvas pans the view when zoomed in', panned[0] !== start[0] || panned[1] !== start[1], `${start.join(' ')} -> ${panned.join(' ')}`);
 
 // -- cannot lose the object ------------------------------------------------
 for (const [dx, dy] of [[3000, 3000], [-3000, -3000], [3000, -3000], [-3000, 3000]]) {
@@ -98,7 +113,7 @@ for (const [dx, dy] of [[3000, 3000], [-3000, -3000], [3000, -3000], [-3000, 300
   await p.mouse.move(mid.x + dx, mid.y + dy, { steps: 30 });
   await p.mouse.up();
   const v = visible(await vb());
-  ok(`the artboard survives a ${dx},${dy} shove`, v.ox >= v.need - 1e-6 && v.oy >= v.need - 1e-6, JSON.stringify(v));
+  ok(`a ${dx},${dy} shove cannot cut the icon off`, v.ox >= v.need - 1e-6 && v.oy >= v.need - 1e-6, JSON.stringify(v));
 }
 
 // the geometry is actually painted inside the viewport

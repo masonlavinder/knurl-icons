@@ -125,10 +125,16 @@ Direct manipulation on the canvas, with the panels for exact numbers:
 - **Arrow keys** nudge by 0.5 (Shift for 1), **Ctrl/Cmd+E** centres the
   selection, **Tab** steps through elements, **Del** removes the selection.
 - **Drag empty canvas** to pan; middle-drag pans from anywhere. Scroll pans,
-  Ctrl/Cmd-scroll zooms, the toolbar has −/+/Fit, and `0` fits. The view is
-  clamped so at least half the viewport is always artboard — the icon cannot
-  be pushed off screen at any zoom, which `pnpm check:view` proves against the
-  running app and `src/store/viewStore.test.ts` proves against the store.
+  Ctrl/Cmd-scroll zooms, the toolbar has −/+/Fit, and `0` fits.
+- The view and the artboard are always **maximally overlapped**. Zoomed out
+  that means the whole icon is on screen; zoomed in it means the screen is
+  nothing but artboard. So the icon can never be cut off by panning, and at
+  fit a drag does nothing because there is nowhere to go. Geometry that has
+  been dragged outside the artboard is still reachable — past 24 units the
+  view is wider than the artboard, so zooming out shows the ground around it.
+  `pnpm check:view` proves this against the running app and
+  `src/store/viewStore.test.ts` against the store, over 2000 interleaved pans
+  and zooms.
 - Each node carries a stable hue, shown as a ring on the canvas and a matching
   swatch in the element tree, so the two panels identify each other without
   labels on the drawing.

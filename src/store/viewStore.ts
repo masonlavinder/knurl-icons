@@ -55,41 +55,35 @@ const MAX_W = CANVAS * 4;
 const MIN_W = CANVAS / 64;
 
 /**
- * How far past the artboard the view may travel, as a fraction of its own
- * width.
+ * Keep the view and the artboard maximally overlapped, on each axis.
  *
- * Half a screen of slack is what makes the artboard unlosable. The bound is
- * the viewBox's own size rather than a fixed number of icon units, so it means
- * the same thing at every zoom: you can always push the artboard to the far
- * edge and no further, and at least half the screen is showing artboard.
+ * One expression covers both regimes, because they are the same rule seen
+ * from either side of the zoom:
  *
- * Two consequences fall out of the half, and both are worth knowing. The
- * pannable range is `CANVAS - w + 2·(w/2)` = exactly CANVAS wide at every
- * zoom, so panning always feels the same distance end to end. And at either
- * extreme the visible artboard is exactly `w/2` — half the viewport — so the
- * icon is never a sliver in a corner.
+ *   · zoomed out (w >= CANVAS) the artboard fits, so it must sit ENTIRELY
+ *     inside the view: x runs [CANVAS - w, 0], every value of which contains
+ *     0..CANVAS whole.
+ *   · zoomed in (w < CANVAS) it does not fit, so the view must sit ENTIRELY
+ *     inside the artboard: x runs [0, CANVAS - w], every value of which is
+ *     nothing but artboard.
  *
- * It needs no special case at either end. Zoomed in the range is still wide
- * enough to reach every edge of the icon: at w = 6 it runs [-3, 21] and the
- * right edge needs only x >= 18. Zoomed out past the artboard the same bound
- * keeps it whole on screen: at w = 96 it runs [-48, -24], and every value in
- * that range contains 0..24 entire.
+ * `CANVAS - size` is the far bound in both, and 0 is the near one — they just
+ * swap ends as the sign flips, so min/max sorts them and no branch is needed.
+ *
+ * There used to be half a screen of slack here, which is why the icon could be
+ * shoved off the top: at fit the range was [-12, 12] and half the artboard
+ * could be pushed out of frame with nothing behind it. There is no slack now.
+ * Panning at fit does nothing, which is correct — everything is already on
+ * screen and there is nowhere to go.
+ *
+ * Geometry outside the artboard is still reachable: past CANVAS the view is
+ * wider than the artboard, so zooming out shows the ground around it.
  */
-const PAN_SLACK = 0.5;
-
 function clampAxis(v: number, size: number): number {
-  const slack = size * PAN_SLACK;
-  return Math.min(CANVAS - size + slack, Math.max(-slack, v));
+  const far = CANVAS - size;
+  return Math.min(Math.max(far, 0), Math.max(Math.min(far, 0), v));
 }
 
-/**
- * Keep the artboard on screen.
- *
- * Every write to viewBox goes through here — there is no path that sets one
- * directly — so no gesture, however fast or however combined, can strand the
- * icon outside the viewport. Clamping at the store rather than in each handler
- * is what makes that true of the wheel, the drag and the buttons at once.
- */
 function clamp(vb: ViewBox): ViewBox {
   const w = Math.min(MAX_W, Math.max(MIN_W, vb.w));
   const h = w;
