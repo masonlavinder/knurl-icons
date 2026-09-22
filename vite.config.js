@@ -3,8 +3,9 @@ import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  // Served from https://masonlavinder.github.io/knurl-icons/, so assets need
-  // the repo name as a prefix. Overridable for other hosts via BASE_PATH.
-  base: process.env.BASE_PATH ?? '/knurl-icons/',
+  // Served from the root of the custom domain (icons.knurled.studio). If the
+  // site ever moves back to a github.io project path, set BASE_PATH to
+  // '/knurl-icons/'.
+  base: process.env.BASE_PATH ?? '/',
   plugins: [react()],
 })
