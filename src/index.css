@@ -23,6 +23,7 @@
   align-items: center;
   gap: var(--space-5);
   padding: var(--space-2) var(--space-3);
+  border-bottom: var(--hairline);
   background: var(--surface-panel);
   flex: 0 0 auto;
 }
@@ -356,9 +357,8 @@ button:focus-visible {
 
 /* ---------------------------------------------------------- brand */
 
-/* Mark, wordmark, part number. The same lockup the studio header carries,
-   and it is the way home — so the hostname colour rule applies and it is not
-   an internal link. */
+/* Mark and wordmark. The way home, so it behaves as a link — and the whole
+   lockup is one piece of text: it changes colour together or not at all. */
 .lockup {
   display: flex;
   align-items: center;
@@ -374,27 +374,9 @@ button:focus-visible {
 }
 
 .brand {
-  display: flex;
-  align-items: baseline;
-  gap: 0;
-  white-space: pre;
   font-weight: 700;
   letter-spacing: var(--track-display);
   text-transform: uppercase;
-}
-
-.brand-sub {
-  font-weight: 400;
-  color: var(--text-muted);
-}
-
-/* Part numbers are always the house accent, and they come from the catalog.
-   src/brand/part.ts is this tool's row of it. */
-.part {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: var(--track-label);
-  color: var(--text-accent);
 }
 
 /* ---------------------------------------------------------- add menu */

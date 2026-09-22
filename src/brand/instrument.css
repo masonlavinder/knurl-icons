@@ -63,14 +63,6 @@
     --surface-tint:   #A87BD41F;
     --text-on-accent: var(--paper);
 
-    /* The grain stays at lavinder-600, the house finish, rather than following
-       the accent up the ramp. Text has to be legible and steps to 400; a
-       texture only has to be seen, and 400 across a full-width strip turns a
-       divider into the loudest thing on screen. 600 on charcoal sits where
-       600 on paper sits in the studio: present, not shouting. The Mark sets
-       its own 400 locally — at 20px the glyph needs the contrast. */
-    --knurl-line: var(--lavinder-600);
-
     /* ---- signal colours -------------------------------------------- */
     /* Not brand hues, and they exist only here. The studio's pages have
        nothing to report; a conformance panel does, and red/amber/green is

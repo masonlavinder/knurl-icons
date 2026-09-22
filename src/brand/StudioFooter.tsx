@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react';
 
-import { Knurl } from './Knurl.tsx';
 import { Mark } from './Mark.tsx';
 import { PART, STUDIO_HOME } from './part.ts';
 import { cx } from './cx.ts';
@@ -36,20 +35,17 @@ export interface StudioFooterProps {
  * The plate every app carries. One subdomain per tool, one footer across all
  * of them — this is what makes them read as one studio.
  *
- * The studio's version looks the part number up in @knurled/catalog and throws
- * on a miss. There is no catalog to read from here, so the record is mirrored
- * in part.ts and that file carries the obligation instead.
+ * Name, palette, and the way home. The part number and status chip the studio's
+ * own footer carries are deliberately absent: the catalog is how the studio
+ * indexes its tools, not something a tool has to wear.
  */
 export function StudioFooter({ className, inkSize = 9 }: StudioFooterProps) {
   return (
     <footer className={cx(styles.footer, className)}>
-      <Knurl />
       <div className={styles.bar}>
         <div className={styles.identity}>
           <Mark size={16} />
-          <span className={styles.partNumber}>{PART.partNumber}</span>
           <span className={styles.name}>{PART.name}</span>
-          <span className={styles.chip}>{PART.status}</span>
         </div>
 
         <div

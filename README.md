@@ -32,7 +32,7 @@ src/core/     pure. no react, no zustand, no DOM. node-testable, worker-movable.
   io/         SVG import + deterministic serializer
   render/     element -> tag/attrs, shared by the serializer AND the canvas
   commands/   command + history types, delete semantics
-src/brand/    the studio lockup, knurl, footer + the one substrate deviation
+src/brand/    the studio mark, lockup, footer + the one substrate deviation
 src/store/    zustand stores: document, selection, view
 src/ui/       canvas layers, panels, keyboard
 src/platform/ DOM/XML adapters injected into core (browser + node)
@@ -44,7 +44,7 @@ That constraint is what makes moving the pipeline into a worker later a
 
 ## Brand
 
-`KS-003` in the studio catalog. The design system comes from `@knurled/kit` in
+The design system comes from `@knurled/kit` in
 the [knurled-studio][studio] monorepo, mirrored into `vendor/knurled-kit`
 because a GitHub repository can publish only one Pages site and that repo
 already publishes `knurled.studio` — see [vendor/knurled-kit/README.md] for

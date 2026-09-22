@@ -4,10 +4,10 @@
     width: 100%;
   }
 
-  /* The bar carries its own gutter so the knurl strip above it runs edge to
-     edge. Tighter than the studio's --gutter: this is a status plate on an
-     instrument, not a page band. */
+  /* An ink rule separates the plate from the workspace. Tighter padding than
+     the studio's --gutter: this is a plate on an instrument, not a page band. */
   .bar {
+    border-top: var(--hairline);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -39,28 +39,6 @@
 
   .home:hover {
     color: var(--text-primary);
-  }
-
-  .partNumber {
-    composes: partNumber from '../../vendor/knurled-kit/patterns.css';
-
-    display: inline-block;
-    white-space: nowrap;
-  }
-
-  /* Square at this size. A 10px chamfer would read as a nick, not a cut. */
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px var(--space-2) 3px;
-    border: var(--edge-weight) solid currentcolor;
-    font-family: var(--font-mono);
-    font-size: var(--text-2xs);
-    line-height: 1;
-    letter-spacing: var(--track-chip);
-    text-transform: uppercase;
-    white-space: nowrap;
-    color: var(--text-external);
   }
 
   /* The press control strip: a solid patch of every ink, butted together the

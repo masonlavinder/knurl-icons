@@ -1,32 +1,16 @@
 /**
- * This tool's catalog record.
+ * What this tool calls itself, and where home is.
  *
- * `packages/catalog/catalog.json` in knurled-studio is the source of truth for
- * part numbers, and this is a copy of one row of it — the same relationship
- * vendor/knurled-kit has to the kit. The studio's StudioFooter throws on a part
- * number it cannot find in the catalog, and the equivalent check here is that
- * this file and that row have to say the same thing.
- *
- * KS-003 is `max(existing) + 1` as of KS-002. Part numbers are never reused and
- * never renumbered.
+ * `packages/catalog/catalog.json` in knurled-studio is the studio's manifest,
+ * and these are the two fields of its row that the tool actually renders. The
+ * part number and status live in the catalog because that is what indexes the
+ * studio's tools — they are not something a tool has to wear, so they are not
+ * mirrored here.
  */
-export interface CatalogEntry {
-  readonly partNumber: string;
-  readonly slug: string;
-  readonly name: string;
-  readonly tagline: string;
-  readonly status: 'ACTIVE' | 'MAINTAINED' | 'PROTOTYPE' | 'SHELVED';
-  readonly url: string;
-}
-
-export const PART: CatalogEntry = {
-  partNumber: 'KS-003',
-  slug: 'icons',
+export const PART = {
   name: 'knurl-icons',
-  tagline: 'Draws 24×24 stroke icons that pass as Lucide.',
-  status: 'PROTOTYPE',
   url: 'https://icons.knurled.studio',
-};
+} as const;
 
-/** KS-000. Where every app points home. */
+/** The studio itself. Where every app points home. */
 export const STUDIO_HOME = 'https://knurled.studio';
