@@ -169,7 +169,7 @@ export function ElementListPanel(): React.JSX.Element {
         </div>
         <div>
           <dt>Drag</dt>
-          <dd>move nodes, handles or a whole shape</dd>
+          <dd>move nodes, handles or a whole shape · empty canvas pans</dd>
         </div>
         <div>
           <dt>{mod()} E</dt>

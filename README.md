@@ -20,6 +20,7 @@ pnpm test:all         # unit + corpus gates (~18s)
 pnpm corpus:drift     # byte-identity report against upstream
 pnpm kit:check        # verify the vendored studio kit matches upstream
 node scripts/check-m0.mjs   # M0 gate, in a real browser (dev server must be up)
+pnpm check:view       # view gate: the icon cannot be panned or zoomed off screen
 ```
 
 ## Layout
@@ -123,6 +124,11 @@ Direct manipulation on the canvas, with the panels for exact numbers:
   into one, so the join keeps its shape instead of developing a kink.
 - **Arrow keys** nudge by 0.5 (Shift for 1), **Ctrl/Cmd+E** centres the
   selection, **Tab** steps through elements, **Del** removes the selection.
+- **Drag empty canvas** to pan; middle-drag pans from anywhere. Scroll pans,
+  Ctrl/Cmd-scroll zooms, the toolbar has −/+/Fit, and `0` fits. The view is
+  clamped so at least half the viewport is always artboard — the icon cannot
+  be pushed off screen at any zoom, which `pnpm check:view` proves against the
+  running app and `src/store/viewStore.test.ts` proves against the store.
 - Each node carries a stable hue, shown as a ring on the canvas and a matching
   swatch in the element tree, so the two panels identify each other without
   labels on the drawing.

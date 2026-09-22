@@ -1,15 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Knurled Icons">
   <!-- The studio mark: a chamfered square, cut top-left and bottom-right,
-       knurled at 45 degrees. Same construction as knurled.studio's favicon,
-       on this tool's substrate — a charcoal face with the accent stepped up
-       the ramp to lavinder-400, exactly as src/brand/instrument.css does it.
-       Hex is inlined because an icon cannot read the token layer. Note: an XML
-       comment cannot contain a double hyphen, so the custom properties are
-       named without their leading dashes here. The values are stock-800 and
-       lavinder-400. -->
+       knurled at 45 degrees, on this tool's substrate.
+
+       The grain is much coarser than the one on the header Mark, and it has to
+       be: a favicon is painted at 16px, where the studio's 8-unit pitch lands
+       four device pixels apart and the whole glyph collapses into a flat purple
+       square. At a 16-unit pitch it is two diamonds across, which still reads
+       as knurling at 16px and still reads as the same mark at 64.
+
+       Hex is inlined because an icon cannot read the token layer. The values
+       are stock-800 and lavinder-400 — see src/brand/instrument.css. Note: an
+       XML comment cannot contain a double hyphen, so the custom properties are
+       named without their leading dashes here. -->
   <defs>
-    <pattern id="knurl" width="8" height="8" patternUnits="userSpaceOnUse">
-      <path d="M0 0 L8 8 M8 0 L0 8" stroke="#A87BD4" stroke-width="1.25" fill="none"/>
+    <pattern id="knurl" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M0 0 L16 16 M16 0 L0 16" stroke="#A87BD4" stroke-width="3" fill="none"/>
     </pattern>
     <clipPath id="chamfer">
       <path d="M8 0H32V24L24 32H0V8Z"/>
@@ -17,5 +22,5 @@
   </defs>
   <path d="M8 0H32V24L24 32H0V8Z" fill="#1C1C1A"/>
   <rect width="32" height="32" fill="url(#knurl)" clip-path="url(#chamfer)"/>
-  <path d="M8 0H32V24L24 32H0V8Z" fill="none" stroke="#A87BD4" stroke-width="3"/>
+  <path d="M8 0H32V24L24 32H0V8Z" fill="none" stroke="#A87BD4" stroke-width="4"/>
 </svg>

@@ -40,6 +40,13 @@ export const SNAP_TOL_PX = 6;
  */
 export const HIT_MIN_PX = 10;
 
+/**
+ * How far the pointer may travel in *screen pixels* and still count as a click
+ * rather than a drag. A click on empty canvas clears the selection and a drag
+ * pans it, so this is what keeps a shaky hand from throwing away a selection.
+ */
+export const PAN_THRESHOLD_PX = 3;
+
 /** Max deviation (icon units) tolerated when refitting two cubics into one. */
 export const REFIT_TOL = 0.02;
 

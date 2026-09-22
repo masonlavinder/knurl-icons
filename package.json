@@ -17,7 +17,8 @@
     "corpus:drift": "node scripts/report-drift.ts",
     "lint:css": "stylelint \"src/**/*.css\"",
     "kit:sync": "node scripts/sync-kit.mjs",
-    "kit:check": "node scripts/sync-kit.mjs --check"
+    "kit:check": "node scripts/sync-kit.mjs --check",
+    "check:view": "node scripts/check-view.mjs"
   },
   "dependencies": {
     "@fontsource/inconsolata": "5.3.0",

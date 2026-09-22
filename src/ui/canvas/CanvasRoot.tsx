@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { insertNode } from '../../core/commands/ops/nodeOps.ts';
 import { deleteAddresses } from '../../core/commands/ops/deleteAddresses.ts';
-import { hitWidthUnits } from '../../core/constants.ts';
+import { hitWidthUnits, PAN_THRESHOLD_PX } from '../../core/constants.ts';
 import { controlsOf, nodeListsOf } from '../../core/model/access.ts';
 import { decodeAddr, encodeAddr, promoteToSubpath } from '../../core/model/address.ts';
 import type { Address, Element, Node } from '../../core/model/types.ts';
@@ -30,7 +30,15 @@ import { GridLayer } from './GridLayer.tsx';
  */
 export function CanvasRoot(): React.JSX.Element {
   const svgRef = useRef<SVGSVGElement>(null);
-  const panRef = useRef<{ x: number; y: number } | null>(null);
+  /**
+   * An in-flight pan.
+   *
+   * `moved` is what separates a drag of the background from a click on it. A
+   * click clears the selection; a drag must not, or letting go after shoving
+   * the canvas around would also throw away what you had selected. So the
+   * clear is deferred to pointerup and only happens if the pointer stayed put.
+   */
+  const panRef = useRef<{ x: number; y: number; moved: boolean; clearOnUp: boolean } | null>(null);
   /**
    * What the pointer last went down on.
    *
@@ -40,6 +48,9 @@ export function CanvasRoot(): React.JSX.Element {
    * pointerdown -- before capture is taken -- is the only reliable source.
    */
   const downRef = useRef<{ addr: Address; seg: string | null; wasSelected: boolean } | null>(null);
+
+  /** Cursor feedback only. The pan itself is driven entirely by panRef. */
+  const [panning, setPanning] = useState(false);
 
   const doc = useDocStore((s) => s.doc);
   const dispatch = useDocStore((s) => s.dispatch);
@@ -83,9 +94,10 @@ export function CanvasRoot(): React.JSX.Element {
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
-      // Middle button, or space-less middle-drag, pans.
+      // Middle button pans from anywhere, including from on top of geometry.
       if (e.button === 1) {
-        panRef.current = { x: e.clientX, y: e.clientY };
+        panRef.current = { x: e.clientX, y: e.clientY, moved: false, clearOnUp: false };
+        setPanning(true);
         e.currentTarget.setPointerCapture(e.pointerId);
         return;
       }
@@ -94,8 +106,12 @@ export function CanvasRoot(): React.JSX.Element {
       const target = (e.target as globalThis.Element).closest('[data-addr]');
       const key = target?.getAttribute('data-addr');
       if (!key) {
+        // Empty canvas: drag pans, click clears. Which one it was is not known
+        // yet, so take the capture and decide at pointerup.
         downRef.current = null;
-        clear();
+        panRef.current = { x: e.clientX, y: e.clientY, moved: false, clearOnUp: true };
+        setPanning(true);
+        e.currentTarget.setPointerCapture(e.pointerId);
         return;
       }
       const addr = decodeAddr(key);
@@ -139,10 +155,17 @@ export function CanvasRoot(): React.JSX.Element {
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (panRef.current) {
+        const pan = panRef.current;
         const vb = useViewStore.getState().viewBox;
         const k = vb.w / (svgRef.current?.clientWidth ?? 1);
-        panBy((e.clientX - panRef.current.x) * k, (e.clientY - panRef.current.y) * k);
-        panRef.current = { x: e.clientX, y: e.clientY };
+        const dx = e.clientX - pan.x;
+        const dy = e.clientY - pan.y;
+        // A couple of pixels of travel is a click with a shaky hand, not a
+        // drag. Below the threshold the selection still clears on release.
+        if (!pan.moved && Math.hypot(dx, dy) > PAN_THRESHOLD_PX) pan.moved = true;
+        panBy(dx * k, dy * k);
+        pan.x = e.clientX;
+        pan.y = e.clientY;
         return;
       }
 
@@ -160,7 +183,16 @@ export function CanvasRoot(): React.JSX.Element {
 
   const endPointer = useCallback(
     (e: React.PointerEvent) => {
+      const pan = panRef.current;
       panRef.current = null;
+      if (pan) {
+        if (pan.clearOnUp && !pan.moved) clear();
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+        setPanning(false);
+        return;
+      }
       // A click on something already selected releases it -- but only when the
       // gesture did not move anything, or dragging a selected node would
       // deselect it the instant you let go.
@@ -177,7 +209,7 @@ export function CanvasRoot(): React.JSX.Element {
         e.currentTarget.releasePointerCapture(e.pointerId);
       }
     },
-    [toggle],
+    [clear, toggle],
   );
 
   const onDoubleClick = useCallback(
@@ -233,7 +265,7 @@ export function CanvasRoot(): React.JSX.Element {
   return (
     <svg
       ref={svgRef}
-      className="canvas"
+      className={panning ? 'canvas is-panning' : 'canvas'}
       viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

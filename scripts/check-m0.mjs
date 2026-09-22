@@ -145,7 +145,7 @@ for (let i = 0; i < 3; i++) {
   await page.waitForTimeout(40);
   await page.mouse.move(anchor.x, anchor.y);
 }
-const zoomText = (await page.locator('.toolbar .muted').last().textContent())?.trim();
+const zoomText = (await page.locator('.toolbar [data-zoom]').textContent())?.trim();
 const before = await rowCount();
 await clickUnits(2, 12);
 const selectedZoomed = await selCount();
