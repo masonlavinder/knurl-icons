@@ -266,22 +266,6 @@ export function CodePanel(): React.JSX.Element {
           />
         </div>
 
-        {/* Says what the marking means. Without it a tinted run is decoration. */}
-        <dl className="lock-legend">
-          <div>
-            <dt>
-              <span className="locked-key" data-kind="spec" />
-            </dt>
-            <dd>house spec, document-wide — checked, not enforced</dd>
-          </div>
-          <div>
-            <dt>
-              <span className="locked-key" data-kind="fixed" />
-            </dt>
-            <dd>fixed by the model — retyped on every round-trip</dd>
-          </div>
-        </dl>
-
         {error && <p className="diag diag-error">{error}</p>}
         {diagnostics.map((d, i) => (
           <p className={d.severity === 'error' ? 'diag diag-error' : 'diag diag-warn'} key={i}>

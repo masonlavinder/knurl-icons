@@ -740,38 +740,6 @@ button[aria-pressed='true'],
   background: var(--canvas-hover);
 }
 
-.lock-legend {
-  display: grid;
-  gap: 2px;
-  margin: 0;
-  padding: var(--space-2) var(--space-3);
-  border-top: var(--hairline);
-  font-size: var(--text-2xs);
-  color: var(--text-muted);
-}
-
-.lock-legend > div {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.lock-legend dt,
-.lock-legend dd {
-  margin: 0;
-}
-
-.locked-key {
-  display: block;
-  width: 16px;
-  height: 10px;
-  background: var(--surface-tint);
-}
-
-.locked-key[data-kind='fixed'] {
-  background: var(--canvas-hover);
-}
-
 .dirty {
   color: var(--signal-warn);
   text-transform: none;
