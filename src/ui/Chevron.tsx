@@ -2,10 +2,10 @@
  * The collapse chevron, drawn to the house icon spec — 24x24, stroke 2, round
  * cap and join. A hand-rolled glyph in an icon editor would be embarrassing.
  *
- * It always points the way the panel will move, which is the only reading that
- * survives being on both sides of the screen at once.
+ * On a section head it points right when shut and down when open, the usual
+ * disclosure reading.
  */
-export function Chevron({ direction }: { direction: 'left' | 'right' }): React.JSX.Element {
+export function Chevron({ direction }: { direction: 'right' | 'down' }): React.JSX.Element {
   return (
     <svg
       className="chev"

@@ -1,15 +1,14 @@
-import { useState } from 'react';
-
 import { checkConformance, conformanceScore, toPascal } from '../../core/io/import/lint.ts';
 import { useDocStore } from '../../store/docStore.ts';
 import { useSelectionStore } from '../../store/selectionStore.ts';
+import { SectionHead, useSectionOpen } from './SectionHead.tsx';
 
 /**
  * Live conformance with the Lucide icon standard.
  *
- * Collapsed by default: the score is the part you need at a glance, and the
- * per-rule detail only matters once it stops reading N/N. The header keeps the
- * count visible either way, and opens red when something actually fails.
+ * Shut by default: the score is the part you need at a glance, and the
+ * per-rule detail only matters once it stops reading N/N. The head keeps the
+ * count visible either way.
  *
  * Rules marked "by construction" can never fail -- the document model cannot
  * express a transform or a per-element stroke override, and the serializer emits
@@ -19,31 +18,22 @@ import { useSelectionStore } from '../../store/selectionStore.ts';
 export function ConformancePanel(): React.JSX.Element {
   const doc = useDocStore((s) => s.doc);
   const select = useSelectionStore((s) => s.set);
-  const [open, setOpen] = useState(false);
+  const open = useSectionOpen('conformance');
 
   const rules = checkConformance(doc);
   const { pass, total } = conformanceScore(rules);
   const clean = pass === total;
 
   return (
-    <div className={open ? 'panel panel-conformance is-open' : 'panel panel-conformance'}>
-      <button
-        type="button"
-        className="panel-head conformance-head"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-      >
-        <span className="twist" aria-hidden="true">
-          {open ? '▾' : '▸'}
-        </span>
-        <span className="conformance-label">Lucide conformance</span>
+    <div className="panel panel-conformance" data-open={open}>
+      <SectionHead id="conformance" title="Lucide conformance">
         <span className={clean ? 'score is-clean' : 'score'}>
           {pass}/{total}
         </span>
-      </button>
+      </SectionHead>
 
       {open && (
-        <>
+        <div className="panel-body">
           <ul className="rules">
             {rules.map((r) => (
               <li key={r.code} className={`rule rule-${r.status}`}>
@@ -69,11 +59,11 @@ export function ConformancePanel(): React.JSX.Element {
           </ul>
 
           <p className="usage">
-            Exports as <code>&lt;{toPascal(doc.name)} /&gt;</code> from{' '}
-            <code>lucide-react</code>, inheriting <code>size</code>, <code>color</code> and{' '}
-            <code>strokeWidth</code> from the consumer.
+            Exports as <code>&lt;{toPascal(doc.name)} /&gt;</code> from <code>lucide-react</code>,
+            inheriting <code>size</code>, <code>color</code> and <code>strokeWidth</code> from the
+            consumer.
           </p>
-        </>
+        </div>
       )}
     </div>
   );

@@ -15,7 +15,7 @@ import {
 import type { Command } from '../core/commands/types.ts';
 import { CANVAS, PADDING, STROKE_WIDTH } from '../core/constants.ts';
 import { makeId } from '../core/ids.ts';
-import { addressExists, } from '../core/model/access.ts';
+import { addressExists } from '../core/model/access.ts';
 import { normalizeSelection } from '../core/model/address.ts';
 import type { IconDoc, Selection } from '../core/model/types.ts';
 import { useSelectionStore } from './selectionStore.ts';
@@ -33,7 +33,12 @@ type DocState = {
   doc: IconDoc;
   history: History;
   dispatch: (cmd: Command) => void;
-  replace: (doc: IconDoc, label: string) => void;
+  /**
+   * Swap the whole document. Calls sharing a mergeKey fold into one history
+   * entry until sealHistory, the way a drag does — so a burst of typing in the
+   * code panel is one undo, not one per pause.
+   */
+  replace: (doc: IconDoc, label: string, mergeKey?: string) => void;
   undo: () => void;
   redo: () => void;
   sealHistory: () => void;
@@ -71,12 +76,17 @@ export const useDocStore = create<DocState>((set, get) => ({
     useSelectionStore.getState().set(after);
   },
 
-  replace: (doc, label) => {
+  replace: (doc, label, mergeKey) => {
     const prev = get();
     const selection = useSelectionStore.getState().selection;
     set({
       doc,
-      history: pushEntry(prev.history, { doc: prev.doc, selection, label }),
+      history: pushEntry(prev.history, {
+        doc: prev.doc,
+        selection,
+        label,
+        ...(mergeKey !== undefined ? { mergeKey } : {}),
+      }),
     });
     useSelectionStore.getState().clear();
   },

@@ -2,7 +2,7 @@
 /**
  * Chrome gate: the shell around the drawing does what it says.
  *
- * The toolbar, the collapsing rails, the panel controls, and the rule that the
+ * The toolbar, the resizable dock and its sections, the panel controls, and the rule that the
  * icon cannot be panned or zoomed off screen. The clamp behind that last one is
  * unit-tested in src/store/viewStore.test.ts; what cannot be tested there is
  * whether the gestures actually reach it — a drag is a pointer capture, a wheel
@@ -37,12 +37,14 @@ await p.waitForSelector('.canvas');
 
 const vb = async () => (await p.locator('.canvas').getAttribute('viewBox')).split(' ').map(Number);
 // Maximally overlapped: the whole artboard when it fits, nothing but artboard
-// when it does not. Anything less means the icon got cut off by a pan.
+// when it does not — on each axis, since the view takes the canvas's shape
+// and is not square. Anything less means the icon got cut off by a pan.
 const visible = ([x, y, w, h]) => {
   const ox = Math.min(x + w, 24) - Math.max(x, 0);
   const oy = Math.min(y + h, 24) - Math.max(y, 0);
-  return { ox, oy, need: Math.min(w, 24) };
+  return { ox, oy, needX: Math.min(w, 24), needY: Math.min(h, 24) };
 };
+const whole = (v) => v.ox >= v.needX - 1e-6 && v.oy >= v.needY - 1e-6;
 const box = await p.locator('.canvas').boundingBox();
 const mid = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 
@@ -54,6 +56,21 @@ const code = await p.locator('.code-input').inputValue();
 ok('Open loads a file into the document', code.includes('<rect'), code.split('\n').find((l) => l.includes('rect'))?.trim());
 ok('Open names the document from the file', (await p.locator('.readout').last().textContent()).includes('Open'));
 
+// Open and Save live at the head of the dock, not in the toolbar, and no
+// section can fold them away.
+const fileBar = await p.evaluate(() => {
+  const bar = document.querySelector('.file-bar');
+  const dock = document.querySelector('.dock').getBoundingClientRect();
+  const r = bar?.getBoundingClientRect();
+  return {
+    inDock: Boolean(bar?.closest('.dock')),
+    atTop: r ? Math.abs(r.top - dock.top) < 1 : false,
+    inToolbar: [...document.querySelectorAll('.toolbar button')].some((b) => /Open|Save/.test(b.textContent)),
+    notASection: !bar?.closest('.panel') && !bar?.querySelector('[aria-expanded]'),
+  };
+});
+ok('Open and Save sit at the top of the dock, not in the toolbar', fileBar.inDock && fileBar.atTop && !fileBar.inToolbar && fileBar.notASection, JSON.stringify(fileBar));
+
 // -- Save ------------------------------------------------------------------
 const dl = p.waitForEvent('download', { timeout: 5000 }).catch(() => null);
 await p.getByRole('button', { name: 'Save' }).click();
@@ -61,6 +78,58 @@ const got = await dl;
 ok('Save downloads an .svg', Boolean(got) && got.suggestedFilename().endsWith('.svg'), got?.suggestedFilename());
 
 // -- zoom buttons ----------------------------------------------------------
+// They float over the canvas, not in the toolbar, and nothing covers them —
+// zoom in the bottom-left corner, Grid and Keylines in the top-left, Undo
+// and Redo in the top-right.
+const float = await p.evaluate(() => {
+  const c = document.querySelector('.col-canvas').getBoundingClientRect();
+  const find = (name) =>
+    document.querySelector(`[aria-label="${name}"]`) ??
+    [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === name);
+  return ['Zoom in', 'Zoom out', 'Grid', 'Keylines', 'Undo', 'Redo'].map((name) => {
+    const b = find(name);
+    const r = b.getBoundingClientRect();
+    const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return {
+      name,
+      inCanvas: r.left >= c.left && r.right <= c.right && r.top >= c.top && r.bottom <= c.bottom,
+      onTop: top === b || b.contains(top),
+      inToolbar: Boolean(b.closest('.toolbar')),
+    };
+  });
+});
+ok('the zoom and view buttons sit over the canvas, on top', float.every((f) => f.inCanvas && f.onTop && !f.inToolbar), JSON.stringify(float));
+const corners = await p.evaluate(() => {
+  const c = document.querySelector('.col-canvas').getBoundingClientRect();
+  const r = (sel) => document.querySelector(sel).getBoundingClientRect();
+  const top = r('.canvas-controls-top-left');
+  const right = r('.canvas-controls-top-right');
+  const bottom = r('.canvas-controls-bottom-left');
+  return {
+    topLeft: top.left - c.left < 40 && top.top - c.top < 40,
+    topRight: c.right - right.right < 40 && right.top - c.top < 40,
+    bottomLeft: bottom.left - c.left < 40 && c.bottom - bottom.bottom < 40,
+  };
+});
+const status = await p.evaluate(() => {
+  const read = document.querySelector('.readouts')?.getBoundingClientRect();
+  const undoBtn = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Undo');
+  const undo = undoBtn.getBoundingClientRect();
+  const corner = undoBtn.closest('.canvas-controls').getBoundingClientRect();
+  return {
+    inCanvas: Boolean(document.querySelector('.readouts')?.closest('.col-canvas')),
+    inToolbar: document.querySelectorAll('.toolbar .readout').length > 0,
+    above: read ? read.bottom <= undo.top + 1 : false,
+    flushRight: read ? Math.abs(read.right - corner.right) < 1 : false,
+  };
+});
+ok('the status sits above Undo and Redo, not in the toolbar', status.inCanvas && !status.inToolbar && status.above && status.flushRight, JSON.stringify(status));
+ok('view toggles top-left, history top-right, zoom bottom-left', corners.topLeft && corners.topRight && corners.bottomLeft, JSON.stringify(corners));
+const gridBtn = p.getByRole('button', { name: 'Grid', exact: true });
+const pressed = await gridBtn.getAttribute('aria-pressed');
+await gridBtn.click();
+ok('Grid still toggles from the canvas', (await gridBtn.getAttribute('aria-pressed')) !== pressed);
+await gridBtn.click();
 const before = await vb();
 await p.getByRole('button', { name: 'Zoom in' }).click();
 const zin = await vb();
@@ -81,7 +150,7 @@ const zoomIn = p.getByRole('button', { name: 'Zoom in' });
 for (let i = 0; i < 40 && !(await zoomIn.isDisabled()); i += 1) await zoomIn.click();
 ok('Zoom in disables itself at the limit', await p.getByRole('button', { name: 'Zoom in' }).isDisabled());
 const tight = visible(await vb());
-ok('the icon is still on screen at max zoom', tight.ox >= tight.need - 1e-6 && tight.oy >= tight.need - 1e-6, JSON.stringify(tight));
+ok('the icon is still on screen at max zoom', whole(tight), JSON.stringify(tight));
 
 // -- drag to pan -----------------------------------------------------------
 const drag = async (dx, dy) => {
@@ -113,7 +182,7 @@ for (const [dx, dy] of [[3000, 3000], [-3000, -3000], [3000, -3000], [-3000, 300
   await p.mouse.move(mid.x + dx, mid.y + dy, { steps: 30 });
   await p.mouse.up();
   const v = visible(await vb());
-  ok(`a ${dx},${dy} shove cannot cut the icon off`, v.ox >= v.need - 1e-6 && v.oy >= v.need - 1e-6, JSON.stringify(v));
+  ok(`a ${dx},${dy} shove cannot cut the icon off`, whole(v), JSON.stringify(v));
 }
 
 // the geometry is actually painted inside the viewport
@@ -129,12 +198,19 @@ ok('the drawn geometry is inside the viewport after all that', onscreen);
 await p.getByRole('button', { name: 'Fit' }).click();
 await p.locator('.element-list .row-main').first().click();
 ok('a row click selects', (await p.locator('.element-list .row-wrap.is-selected').count()) === 1);
-await p.mouse.move(box.x + 12, box.y + 12);
+// The grabbing hand is for a pan in flight, not for a press that may yet
+// turn out to be a click.
+const grabbing = () => p.evaluate(() => getComputedStyle(document.querySelector('.canvas')).cursor);
+await p.mouse.move(box.x + box.width - 12, box.y + box.height - 12);
+ok('the empty canvas shows the plain arrow', (await grabbing()) === 'default', await grabbing());
 await p.mouse.down();
+ok('pressing without moving shows no hand', (await grabbing()) === 'default', await grabbing());
 await p.mouse.move(box.x + 160, box.y + 160, { steps: 12 });
+ok('a real drag shows the grabbing hand', (await grabbing()) === 'grabbing', await grabbing());
 await p.mouse.up();
+ok('and it goes once the drag ends', (await grabbing()) === 'default', await grabbing());
 ok('dragging the background keeps the selection', (await p.locator('.element-list .row-wrap.is-selected').count()) === 1);
-await p.mouse.click(box.x + 12, box.y + 12);
+await p.mouse.click(box.x + box.width - 12, box.y + box.height - 12);
 ok('clicking the background still clears it', (await p.locator('.element-list .row-wrap.is-selected').count()) === 0);
 
 // -- copy out of the SVG panel ---------------------------------------------
@@ -179,92 +255,147 @@ await p.locator('.code-input').fill('<svg xmlns="http://www.w3.org/2000/svg" wid
 await p.waitForTimeout(600);
 ok('the panel still applies what is typed under the overlay', (await p.locator('.element-list .row').count()) === 1);
 
-// -- collapsing rails ------------------------------------------------------
-const ws = p.locator('.workspace');
-const colOpen = await p.locator('.col-canvas').boundingBox();
-ok('both panels start open on a wide window', (await ws.getAttribute('data-left')) === 'open' && (await ws.getAttribute('data-right')) === 'open');
+// -- applying as you type --------------------------------------------------
+// Whatever parses goes straight through; whatever does not stays as typed,
+// with the canvas on the last good version and a Revert to get back to it.
+const input = p.locator('.code-input');
+const rows = () => p.locator('.element-list .row').count();
+const TWO = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20"/><circle cx="12" cy="12" r="4"/></svg>';
+const THREE = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20"/><circle cx="12" cy="12" r="4"/><circle cx="6" cy="18" r="2"/></svg>';
+await input.focus();
+await input.fill(TWO);
+await p.waitForTimeout(250);
+ok('a valid edit applies without leaving the box', (await rows()) === 2, `${await rows()} rows`);
+ok('and the text is not reformatted under the caret', (await input.inputValue()) === TWO);
+await input.fill(THREE);
+await p.waitForTimeout(250);
+ok('the next edit applies too', (await rows()) === 3);
+await input.fill(THREE.replace('<circle cx="6"', '<circle cx="6'));
+await p.waitForTimeout(250);
+ok('broken text says it is not applied', await p.getByText('not applied').isVisible());
+ok('the canvas keeps the last good version', (await rows()) === 3);
+ok('the broken text is left as typed', (await input.inputValue()).includes('cx="6 cy'));
+await p.getByRole('button', { name: 'Revert' }).click();
+ok('Revert puts the text back to match the canvas', !(await p.getByText('not applied').isVisible()) && (await input.inputValue()).includes('cx="6"'));
+ok('Revert does not touch the document', (await rows()) === 3);
+ok('leaving the box tidies the text', (await input.inputValue()).includes('\n'));
+await p.getByRole('button', { name: 'Undo' }).click();
+ok('the whole run of typing is one undo', (await rows()) === 1, `${await rows()} rows`);
 
-await p.getByRole('button', { name: /Collapse the left/ }).click();
-ok('the left rail collapses its panel', (await ws.getAttribute('data-left')) === 'closed');
-ok('the collapsed left panel is gone from the tree', (await p.locator('.element-list').count()) === 0);
+// -- dock sections ---------------------------------------------------------
+// One column, three sections. Open ones split the height; a shut one is its
+// head alone and gives its share back.
+const sectionH = () =>
+  p.evaluate(() =>
+    Object.fromEntries(
+      ['elements', 'code', 'conformance'].map((k) => [
+        k,
+        Math.round(document.querySelector(`.dock > .panel-${k}`).getBoundingClientRect().height),
+      ]),
+    ),
+  );
+ok('there is no right-hand column', (await p.locator('.col-right').count()) === 0);
+ok('the element list no longer carries the shortcut list', (await p.locator('.panel-elements .hint').count()) === 0);
+ok('Shortcuts is its own section, shut to start', !(await p.locator('.panel-shortcuts .hint').isVisible()));
+await p.getByRole('button', { name: 'Shortcuts', exact: true }).click();
+ok('opening it shows the list', await p.locator('.panel-shortcuts .hint').isVisible());
+ok('it lists undo', (await p.locator('.panel-shortcuts .hint').textContent()).includes('undo'));
+await p.getByRole('button', { name: 'Shortcuts', exact: true }).click();
+const h0 = await sectionH();
+ok('elements and SVG share the height evenly', Math.abs(h0.elements - h0.code) <= 2, JSON.stringify(h0));
+await p.getByRole('button', { name: 'SVG', exact: true }).click();
+ok('shutting a section hides its body', !(await p.locator('.code-input').isVisible()));
+const h1 = await sectionH();
+await p.getByRole('button', { name: 'Elements', exact: true }).click();
+ok('Open and Save stay with every section shut', (await p.getByRole('button', { name: 'Open', exact: true }).isVisible()) && (await p.getByRole('button', { name: 'Save', exact: true }).isVisible()));
+await p.getByRole('button', { name: 'Elements', exact: true }).click();
+ok('the open section takes the space back', h1.elements > h0.elements + 100, JSON.stringify(h1));
+await p.getByRole('button', { name: 'Copy' }).click();
+const shutClip = await p.evaluate(() => navigator.clipboard.readText());
+ok('a shut section keeps its head controls', shutClip.includes('<svg') && (await p.locator('.btn-copy').textContent()) === 'Copied');
+await p.getByRole('button', { name: 'Lucide conformance' }).click();
+const h2 = await sectionH();
+ok('two open sections split the height', Math.abs(h2.elements - h2.conformance) <= 2, JSON.stringify(h2));
+await p.getByRole('button', { name: 'SVG', exact: true }).click();
+const h3 = await sectionH();
+ok('three open sections split it three ways', Math.max(h3.elements, h3.code, h3.conformance) - Math.min(h3.elements, h3.code, h3.conformance) <= 2, JSON.stringify(h3));
+await p.getByRole('button', { name: 'Lucide conformance' }).click();
 
-await p.getByRole('button', { name: /Collapse the right/ }).click();
-ok('the right rail collapses its panel', (await ws.getAttribute('data-right')) === 'closed');
+// -- resizing the dock -----------------------------------------------------
+// No collapsing: the seam drags the dock wider or narrower instead.
+ok('there is no collapse control', (await p.locator('.edge-toggle').count()) === 0);
+const seam = p.getByRole('separator', { name: 'Resize the side panel' });
+const dockW = () => p.evaluate(() => Math.round(document.querySelector('.col-dock').getBoundingClientRect().width));
+const canvasW = () => p.evaluate(() => Math.round(document.querySelector('.col-canvas').getBoundingClientRect().width));
+const w0 = await dockW();
+const c0 = await canvasW();
+// Grabs the seam wherever it is now and drags it by dx.
+const dragSeam = async (dx) => {
+  const sb = await seam.boundingBox();
+  const x = sb.x + sb.width / 2;
+  const y = sb.y + sb.height / 2;
+  await p.mouse.move(x, y);
+  await p.mouse.down();
+  await p.mouse.move(x + dx, y, { steps: 6 });
+  await p.mouse.up();
+};
+await dragSeam(150);
+const w1 = await dockW();
+ok('dragging the seam right widens the dock', Math.abs(w1 - (w0 + 150)) <= 2, `${w0} -> ${w1}`);
+ok('the canvas gives up the same width', Math.abs((c0 - (await canvasW())) - (w1 - w0)) <= 2);
 
-// The artboard itself is square and capped at 78vh, so on a short window it is
-// height-bound and collapsing cannot widen it. The column is what gains the
-// space, and that is what the rails are for.
-const colWide = await p.locator('.col-canvas').boundingBox();
-ok('the canvas column takes the space back', colWide.width > colOpen.width, `${Math.round(colOpen.width)} -> ${Math.round(colWide.width)}`);
+await dragSeam(-400);
+ok('dragging it left narrows the dock, but not past its minimum', (await dockW()) === 220, `${await dockW()}`);
 
-await p.getByRole('button', { name: /Expand the left/ }).click();
-await p.getByRole('button', { name: /Expand the right/ }).click();
-ok('both reopen', (await ws.getAttribute('data-left')) === 'open' && (await ws.getAttribute('data-right')) === 'open');
+await dragSeam(1150);
+ok('the canvas keeps its share however far it is dragged', (await canvasW()) >= 360 && (await dockW()) <= 720, `${await dockW()}px dock, ${await canvasW()}px canvas`);
 
-// The handle lives on the seam, in the head band, and does not move when the
-// panel does.
-const seam = await p.evaluate(() => {
-  const read = (col) => {
-    const c = document.querySelector(col).getBoundingClientRect();
-    const t = document.querySelector(`${col} .edge-toggle`).getBoundingClientRect();
-    return {
-      onInnerEdge:
-        col === '.col-left'
-          ? Math.abs(t.right - c.right) < 2
-          : Math.abs(t.left - c.left) < 2,
-      // Level with the panel head: same top, same height.
-      headTop: Math.round(t.top - c.top),
-      headDelta: Math.round(
-        t.height - document.querySelector('.panel-head').getBoundingClientRect().height,
-      ),
-    };
-  };
-  return { left: read('.col-left'), right: read('.col-right') };
-});
-ok('each handle sits on its panel\'s inner edge', seam.left.onInnerEdge && seam.right.onInnerEdge, JSON.stringify(seam));
-ok(
-  'each handle sits in the head band, level with the title',
-  seam.left.headTop === 0 && seam.right.headTop === 0 && seam.left.headDelta === 0 && seam.right.headDelta === 0,
-  JSON.stringify(seam),
-);
-ok('the left panel comes back', (await p.locator('.element-list').count()) === 1);
+await seam.dblclick();
+ok('a double click puts the width back', Math.abs((await dockW()) - w0) <= 1, `${await dockW()} vs ${w0}`);
+
+await seam.focus();
+await p.keyboard.press('ArrowRight');
+ok('the arrow keys move it too', (await dockW()) === w0 + 16, `${await dockW()}`);
+await p.keyboard.press('ArrowLeft');
+ok('and back', (await dockW()) === w0);
+ok('the seam is labelled with its width', Number(await seam.getAttribute('aria-valuenow')) === w0);
 
 // -- a portrait window is not a wall of chrome -----------------------------
-await p.setViewportSize({ width: 820, height: 1080 });
+await p.setViewportSize({ width: 760, height: 1080 });
 await p.reload({ waitUntil: 'networkidle' });
 await p.waitForSelector('.canvas');
 const narrow = await p.evaluate(() => ({
-  left: document.querySelector('.workspace').dataset.left,
-  right: document.querySelector('.workspace').dataset.right,
   hScroll: document.documentElement.scrollWidth > document.documentElement.clientWidth,
   clipped: document.querySelector('.toolbar').scrollWidth > document.querySelector('.toolbar').clientWidth + 1,
-  canvas: Math.round(document.querySelector('.canvas').getBoundingClientRect().width),
+  canvas: Math.round(document.querySelector('.col-canvas').getBoundingClientRect().width),
 }));
-ok('a portrait window starts with both panels collapsed', narrow.left === 'closed' && narrow.right === 'closed');
 ok('it has no horizontal page scroll', !narrow.hScroll);
 ok('the toolbar is not clipped', !narrow.clipped);
-ok('the canvas gets the window', narrow.canvas > 600, `${narrow.canvas}px`);
-await p.getByRole('button', { name: /Expand the left/ }).click();
-ok('a panel can still be opened when narrow', (await p.locator('.element-list').count()) === 1);
-ok('the handle is reachable in both states', (await p.locator('.edge-toggle').count()) === 2);
-
-// The handle is absolutely positioned over the head, so the head has to hold a
-// gap for it — the first time it moved up here it landed on the element count.
-const clear = await p.evaluate(() => {
-  const hit = (a, b) => a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom;
-  const clashes = [];
-  for (const col of ['.col-left', '.col-right']) {
-    const toggle = document.querySelector(`${col} .edge-toggle`);
-    if (!toggle) continue;
-    const t = toggle.getBoundingClientRect();
-    for (const el of document.querySelectorAll(`${col} .panel-head > *`)) {
-      if (hit(t, el.getBoundingClientRect())) clashes.push(`${col} ${el.textContent.trim()}`);
-    }
-  }
-  return clashes;
-});
-ok('the handle does not sit on any head content', clear.length === 0, clear.join(', '));
+ok('the canvas keeps a usable share', narrow.canvas >= 360, `${narrow.canvas}px`);
 ok('the toolbar prints no zoom figure', (await p.locator('.toolbar [data-zoom]').count()) === 0);
+
+// -- align buttons ---------------------------------------------------------
+// Only there with a selection, and they move only what is selected.
+await p.setViewportSize({ width: 1440, height: 900 });
+await p.reload({ waitUntil: 'networkidle' });
+await p.waitForSelector('.canvas');
+const alignGroup = p.getByRole('group', { name: 'Align selection' });
+ok('no align buttons without a selection', (await alignGroup.count()) === 0);
+// The seed's second element is the check mark, m16 9-5.5 5.5L8 12: y 9..14.5.
+// The serializer may write it relative or absolute, so match either.
+await p.locator('.element-list .row-main').nth(1).click();
+ok('selecting shows them', await alignGroup.isVisible());
+const src = () => p.locator('.code-input').inputValue();
+await alignGroup.getByRole('button', { name: 'Top' }).click();
+ok('Top lifts the selection to the padding', /[mM]16 2[ -]/.test(await src()), (await src()).match(/<path[^>]*>/)?.[0]);
+ok('and leaves the rest where it was', (await src()).includes('cx="12" cy="12" r="10"'));
+await alignGroup.getByRole('button', { name: 'Bottom' }).click();
+ok('Bottom drops it to the padding', /[mM]16 16\.5[ -]/.test(await src()), (await src()).match(/<path[^>]*>/)?.[0]);
+await alignGroup.getByRole('button', { name: 'Center' }).click();
+ok('Center brings it back to the middle', /[mM]16 9\.5[ -]/.test(await src()), (await src()).match(/<path[^>]*>/)?.[0]);
+ok('the selection survives each move', await alignGroup.isVisible());
+await p.keyboard.press('Escape');
+ok('clearing the selection hides them again', (await alignGroup.count()) === 0);
 
 ok('no console errors', errs.length === 0, errs.join(' | '));
 console.log(fails === 0 ? '\nall checks passed' : `\n${fails} FAILED`);

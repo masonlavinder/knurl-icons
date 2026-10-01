@@ -2,17 +2,29 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { Mark } from './brand/Mark.tsx';
 import { StudioFooter } from './brand/StudioFooter.tsx';
+import { alignSelection, centerSelection } from './core/commands/ops/centerSelection.ts';
 import { parseSvg } from './core/io/import/parseSvg.ts';
 import { serialize } from './core/io/export/serialize.ts';
+import type { IconDoc } from './core/model/types.ts';
 import { useDocStore } from './store/docStore.ts';
 import { useSelectionStore } from './store/selectionStore.ts';
-import { useViewStore, ZOOM_LIMITS } from './store/viewStore.ts';
+import {
+  defaultDockWidth,
+  DOCK_LIMITS,
+  span,
+  useViewStore,
+  ZOOM_LIMITS,
+} from './store/viewStore.ts';
 import { CanvasRoot } from './ui/canvas/CanvasRoot.tsx';
 import { useKeyboard } from './ui/hooks/useKeyboard.ts';
 import { CodePanel } from './ui/panels/CodePanel.tsx';
 import { ConformancePanel } from './ui/panels/ConformancePanel.tsx';
 import { ElementListPanel } from './ui/panels/ElementListPanel.tsx';
-import { Chevron } from './ui/Chevron.tsx';
+import { ShortcutsPanel } from './ui/panels/ShortcutsPanel.tsx';
+
+/** The platform's command key, as the shortcut hints spell it. */
+const MOD =
+  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 
 /** One toolbar click of zoom. Matches roughly two wheel notches. */
 const ZOOM_STEP = 1.4;
@@ -55,112 +67,254 @@ export default function App(): React.JSX.Element {
   );
 }
 
+/** One arrow-key press of dock width; Shift takes bigger steps. */
+const DOCK_STEP = 16;
+const DOCK_STEP_BIG = 64;
+
 /**
- * The handle that opens and closes a panel, sitting on the panel's inner edge.
+ * The seam between the dock and the canvas, which drags to resize the dock.
  *
- * On the seam rather than inside the head: the edge is what moves, so that is
- * where the grip belongs, and it stays in the same place whether the panel is
- * open or shut. Half-height-centred so it is findable without hunting along a
- * full-height rail.
+ * A separator in ARIA terms, so it is reachable by Tab and the arrow keys move
+ * it — a resize that only a mouse can do is not one everybody can do. A double
+ * click puts the width back where it started.
  */
-function EdgeToggle({
-  side,
-  open,
-  onToggle,
-}: {
-  side: 'left' | 'right';
-  open: boolean;
-  onToggle: () => void;
-}): React.JSX.Element {
-  const label = `${open ? 'Collapse' : 'Expand'} the ${side} panel`;
-  // Open, it points outward to fold the panel away; closed, back toward the
-  // canvas to bring it out.
-  const pointsLeft = side === 'left' ? open : !open;
+function DockResizer(): React.JSX.Element {
+  const width = useViewStore((s) => s.dockWidth);
+  const setWidth = useViewStore((s) => s.setDockWidth);
+  // Where the drag began, so the edge follows the pointer exactly rather than
+  // accumulating rounding from one move event to the next.
+  const drag = useRef<{ x: number; w: number } | null>(null);
+  const end = (): void => {
+    drag.current = null;
+  };
 
   return (
-    <button
-      type="button"
-      className="edge-toggle"
-      aria-expanded={open}
-      aria-label={label}
-      title={label}
-      onClick={onToggle}
-    >
-      <Chevron direction={pointsLeft ? 'left' : 'right'} />
-    </button>
-  );
-}
-
-/**
- * A collapsed panel: the panel, narrowed — not a rail bolted to the side of
- * the workspace. It keeps the surface, the head band and the rule under it,
- * and sets the panel's own name down the strip, so the closed state reads as
- * the same object as the open one.
- */
-function CollapsedPanel({ label }: { label: string }): React.JSX.Element {
-  return (
-    <div className="panel panel-collapsed" aria-hidden="true">
-      <div className="panel-head" />
-      <span className="panel-collapsed-label">{label}</span>
-    </div>
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize the side panel"
+      aria-valuenow={width}
+      aria-valuemin={DOCK_LIMITS.MIN}
+      aria-valuemax={DOCK_LIMITS.MAX}
+      tabIndex={0}
+      title="Drag to resize · double-click to reset"
+      className="dock-resizer"
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        // Captured, so the drag survives the pointer outrunning the seam; and
+        // no default, so it does not start a text selection on the way.
+        e.preventDefault();
+        e.currentTarget.setPointerCapture(e.pointerId);
+        drag.current = { x: e.clientX, w: width };
+      }}
+      onPointerMove={(e) => {
+        if (drag.current) setWidth(drag.current.w + e.clientX - drag.current.x);
+      }}
+      onPointerUp={end}
+      onPointerCancel={end}
+      onDoubleClick={() => setWidth(defaultDockWidth())}
+      onKeyDown={(e) => {
+        const step = e.shiftKey ? DOCK_STEP_BIG : DOCK_STEP;
+        const delta = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+        if (delta === 0) return;
+        // The window-level shortcuts nudge the selection on arrows; this
+        // press belongs to the seam.
+        e.preventDefault();
+        e.stopPropagation();
+        setWidth(width + delta);
+      }}
+    />
   );
 }
 
 function Workspace(): React.JSX.Element {
-  const leftOpen = useViewStore((s) => s.leftOpen);
-  const rightOpen = useViewStore((s) => s.rightOpen);
-  const toggleLeft = useViewStore((s) => s.toggleLeft);
-  const toggleRight = useViewStore((s) => s.toggleRight);
+  const dockWidth = useViewStore((s) => s.dockWidth);
 
   return (
-    <div
-      className="workspace"
-      data-left={leftOpen ? 'open' : 'closed'}
-      data-right={rightOpen ? 'open' : 'closed'}
-    >
-      {/* Unmounted rather than hidden: the panels subscribe to the document,
-          and a collapsed one has no business re-rendering on every drag. */}
-      <aside className="col col-left">
-        {leftOpen ? <ElementListPanel /> : <CollapsedPanel label="Elements" />}
-        <EdgeToggle side="left" open={leftOpen} onToggle={toggleLeft} />
+    <div className="workspace" style={{ '--dock': `${dockWidth}px` } as React.CSSProperties}>
+      {/* One column of sections, each opened and shut on its own; the open
+          ones share the height. */}
+      <aside className="col col-dock">
+        <div className="dock">
+          <FileBar />
+          <ElementListPanel />
+          <CodePanel />
+          <ConformancePanel />
+          <ShortcutsPanel />
+        </div>
+        <DockResizer />
       </aside>
 
       <main className="col col-canvas">
         <CanvasRoot />
+        <ViewToggles />
+        <HistoryControls />
+        <div className="canvas-controls canvas-controls-bottom-left">
+          <ZoomControls />
+          <AlignControls />
+        </div>
       </main>
-
-      <aside className="col col-right">
-        <EdgeToggle side="right" open={rightOpen} onToggle={toggleRight} />
-        {rightOpen ? (
-          <div className="col-stack">
-            <CodePanel />
-            <ConformancePanel />
-          </div>
-        ) : (
-          <CollapsedPanel label="SVG" />
-        )}
-      </aside>
     </div>
   );
 }
 
-function Toolbar(): React.JSX.Element {
-  const replace = useDocStore((s) => s.replace);
-  const doc = useDocStore((s) => s.doc);
-  const undo = useDocStore((s) => s.undo);
-  const redo = useDocStore((s) => s.redo);
-  const history = useDocStore((s) => s.history);
-  const viewW = useViewStore((s) => s.viewBox.w);
+/**
+ * Grid and keylines, floated in the canvas's top-left corner. They change how
+ * the artboard is drawn, so they sit on it — same construction as the zoom
+ * controls in the corner below.
+ */
+function ViewToggles(): React.JSX.Element {
   const showGrid = useViewStore((s) => s.showGrid);
   const showKeylines = useViewStore((s) => s.showKeylines);
   const toggleGrid = useViewStore((s) => s.toggleGrid);
   const toggleKeylines = useViewStore((s) => s.toggleKeylines);
-  const zoomAtCenter = useViewStore((s) => s.zoomAtCenter);
-  const reset = useViewStore((s) => s.reset);
+
+  return (
+    <div className="canvas-controls canvas-controls-top-left" role="group" aria-label="View">
+      <button type="button" className="btn-toggle" onClick={toggleGrid} aria-pressed={showGrid}>
+        Grid
+      </button>
+      <button
+        type="button"
+        className="btn-toggle"
+        onClick={toggleKeylines}
+        aria-pressed={showKeylines}
+      >
+        Keylines
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Move the selection to a fixed place on the artboard: centred (what Ctrl+E
+ * does), or pushed up or down to the padding.
+ *
+ * Only there while something is selected. Without a selection Ctrl+E centres
+ * the whole icon, but a row of buttons that silently act on everything would
+ * be a trap the first time someone clicks one meaning a single shape.
+ */
+function AlignControls(): React.JSX.Element | null {
+  const dispatch = useDocStore((s) => s.dispatch);
+  const addrs = useSelectionStore((s) => s.selection.addrs);
+  if (addrs.length === 0) return null;
+
+  const doc = (): IconDoc => useDocStore.getState().doc;
+  return (
+    <div className="control-group" role="group" aria-label="Align selection">
+      <button
+        type="button"
+        onClick={() => dispatch(centerSelection(doc(), addrs))}
+        title={`Center on the canvas (${MOD} E)`}
+      >
+        Center
+      </button>
+      <button
+        type="button"
+        onClick={() => dispatch(alignSelection(doc(), addrs, 'top'))}
+        title="Move up to the top padding"
+      >
+        Top
+      </button>
+      <button
+        type="button"
+        onClick={() => dispatch(alignSelection(doc(), addrs, 'bottom'))}
+        title="Move down to the bottom padding"
+      >
+        Bottom
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Undo and redo, floated in the canvas's top-right corner: they act on the
+ * drawing, so they sit on it, opposite the view toggles. The selection count
+ * and the last action's name sit just above them.
+ */
+function HistoryControls(): React.JSX.Element {
+  const undo = useDocStore((s) => s.undo);
+  const redo = useDocStore((s) => s.redo);
+  const canUndo = useDocStore((s) => s.history.past.length > 0);
+  const canRedo = useDocStore((s) => s.history.future.length > 0);
+  const last = useDocStore((s) => s.history.past[s.history.past.length - 1]?.label);
   const count = useSelectionStore((s) => s.selection.addrs.length);
 
+  return (
+    <div className="canvas-controls canvas-controls-top-right">
+      {/* Status, not controls. Set as labels so they cannot be read as
+          buttons. Above Undo because "Last" is what Undo would take back. */}
+      <div className="readouts">
+        <span className="readout">{count} selected</span>
+        <span className="readout">
+          <span className="readout-key">Last</span>
+          {last ?? '—'}
+        </span>
+      </div>
+      <div className="control-group" role="group" aria-label="History">
+        <button type="button" onClick={undo} disabled={!canUndo}>
+          Undo
+        </button>
+        <button type="button" onClick={redo} disabled={!canRedo}>
+          Redo
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Zoom, floated over the canvas it acts on rather than up in the toolbar.
+ *
+ * In the corner by the dock, where it covers ground rather than artboard at
+ * fit, and above the canvas in the stacking order so a drag or a wheel on the
+ * artboard never lands on it by accident — and a click on it never reaches the
+ * artboard.
+ */
+function ZoomControls(): React.JSX.Element {
+  // The limits are on the view's short side, whatever shape the canvas is.
+  const viewW = useViewStore((s) => span(s.viewBox));
+  const zoomAtCenter = useViewStore((s) => s.zoomAtCenter);
+  const reset = useViewStore((s) => s.reset);
+
+  return (
+    <div className="control-group" role="group" aria-label="Zoom">
+      <button
+        type="button"
+        className="btn-icon"
+        onClick={() => zoomAtCenter(1 / ZOOM_STEP)}
+        disabled={viewW >= ZOOM_LIMITS.MAX_W - 1e-9}
+        aria-label="Zoom out"
+        title="Zoom out"
+      >
+        −
+      </button>
+      <button
+        type="button"
+        className="btn-icon"
+        onClick={() => zoomAtCenter(ZOOM_STEP)}
+        disabled={viewW <= ZOOM_LIMITS.MIN_W + 1e-9}
+        aria-label="Zoom in"
+        title="Zoom in"
+      >
+        +
+      </button>
+      <button type="button" onClick={reset}>
+        Fit
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Open and Save, fixed at the head of the dock above every section.
+ *
+ * Not a section: there is nothing to fold away, and the two things you do to
+ * a file should not move or disappear depending on which sections are open.
+ */
+function FileBar(): React.JSX.Element {
+  const replace = useDocStore((s) => s.replace);
   const fileRef = useRef<HTMLInputElement>(null);
-  const last = history.past[history.past.length - 1];
 
   /**
    * Read an .svg off disk and make it the document.
@@ -186,8 +340,12 @@ function Toolbar(): React.JSX.Element {
     [replace],
   );
 
-  /** Serialize the document back out to a file the user can keep. */
+  /**
+   * Serialize the document back out to a file the user can keep. Read from
+   * the store on click, so the bar does not re-render on every edit.
+   */
   const saveFile = useCallback(() => {
+    const doc = useDocStore.getState().doc;
     const blob = new Blob([serialize(doc)], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -195,89 +353,34 @@ function Toolbar(): React.JSX.Element {
     a.download = `${doc.name || 'icon'}.svg`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [doc]);
+  }, []);
 
+  return (
+    <div className="file-bar">
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".svg,image/svg+xml"
+        className="sr-only"
+        onChange={(e) => void openFile(e)}
+      />
+      <button type="button" onClick={() => fileRef.current?.click()}>
+        Open
+      </button>
+      <button type="button" onClick={saveFile}>
+        Save
+      </button>
+    </div>
+  );
+}
+
+function Toolbar(): React.JSX.Element {
   return (
     <header className="toolbar">
       <a className="lockup" href="https://knurled.studio">
         <Mark size={20} />
         <strong className="brand">Knurled Icons</strong>
       </a>
-
-      <div className="group">
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".svg,image/svg+xml"
-          className="sr-only"
-          onChange={(e) => void openFile(e)}
-        />
-        <button type="button" onClick={() => fileRef.current?.click()}>
-          Open
-        </button>
-        <button type="button" onClick={saveFile}>
-          Save
-        </button>
-      </div>
-
-      <div className="group">
-        <button type="button" onClick={undo} disabled={history.past.length === 0}>
-          Undo
-        </button>
-        <button type="button" onClick={redo} disabled={history.future.length === 0}>
-          Redo
-        </button>
-      </div>
-
-      <div className="group">
-        <button type="button" className="btn-toggle" onClick={toggleGrid} aria-pressed={showGrid}>
-          Grid
-        </button>
-        <button
-          type="button"
-          className="btn-toggle"
-          onClick={toggleKeylines}
-          aria-pressed={showKeylines}
-        >
-          Keylines
-        </button>
-      </div>
-
-      <div className="group">
-        <button
-          type="button"
-          className="btn-icon"
-          onClick={() => zoomAtCenter(1 / ZOOM_STEP)}
-          disabled={viewW >= ZOOM_LIMITS.MAX_W - 1e-9}
-          aria-label="Zoom out"
-          title="Zoom out"
-        >
-          −
-        </button>
-        <button
-          type="button"
-          className="btn-icon"
-          onClick={() => zoomAtCenter(ZOOM_STEP)}
-          disabled={viewW <= ZOOM_LIMITS.MIN_W + 1e-9}
-          aria-label="Zoom in"
-          title="Zoom in"
-        >
-          +
-        </button>
-        <button type="button" onClick={reset}>
-          Fit
-        </button>
-      </div>
-
-      <div className="group right">
-        {/* Status, not controls. Set as labels so they cannot be read as
-            buttons the way the last-action readout was. */}
-        <span className="readout">{count} selected</span>
-        <span className="readout">
-          <span className="readout-key">Last</span>
-          {last ? last.label : '—'}
-        </span>
-      </div>
     </header>
   );
 }

@@ -29,23 +29,6 @@
   flex: 0 0 auto;
 }
 
-/* Each group is a set of controls that belong together, fenced off by an ink
-   rule. The rule is what does the separating — spacing alone had Undo sitting
-   as close to Grid as it did to Redo, so the toolbar read as one long row of
-   eleven buttons rather than four jobs. */
-.group {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding-left: var(--space-4);
-  border-left: var(--hairline);
-}
-
-.group.right {
-  margin-left: auto;
-  gap: var(--space-4);
-}
-
 /* Square by default, with an ink edge.
    ---------------------------------------------------------------------------
    The chamfer belongs to the banner and to the mark, not to every control. At
@@ -94,7 +77,7 @@ button:disabled {
    fill, clipped — and ::before is the face, inset by --edge-weight and
    clipped to a chamfer smaller by the same amount so the rim is even all the
    way round the corner. Same construction as the kit's Panel and Mark. */
-.toolbar button {
+:is(.toolbar, .canvas-controls, .file-bar) button {
   position: relative;
   isolation: isolate;
   border: none;
@@ -113,7 +96,7 @@ button:disabled {
   );
 }
 
-.toolbar button::before {
+:is(.toolbar, .canvas-controls, .file-bar) button::before {
   content: '';
   position: absolute;
   inset: var(--edge-weight);
@@ -132,12 +115,12 @@ button:disabled {
 }
 
 /* Rim and face move together, so the cut lights up with the rest of it. */
-.toolbar button:hover:not(:disabled) {
+:is(.toolbar, .canvas-controls, .file-bar) button:hover:not(:disabled) {
   background: var(--text-accent);
   color: var(--text-accent);
 }
 
-.toolbar button:hover:not(:disabled)::before {
+:is(.toolbar, .canvas-controls, .file-bar) button:hover:not(:disabled)::before {
   background: var(--surface-hover);
 }
 
@@ -145,15 +128,15 @@ button:disabled {
    as something that will do a thing when pressed. The face takes the panel
    color rather than `none`: it sits ON TOP of the rim, so transparent would
    mean the rim floods the control instead of outlining it. */
-.toolbar .btn-toggle {
+:is(.toolbar, .canvas-controls, .file-bar) .btn-toggle {
   color: var(--text-muted);
 }
 
-.toolbar .btn-toggle::before {
+:is(.toolbar, .canvas-controls, .file-bar) .btn-toggle::before {
   background: var(--surface-panel);
 }
 
-.toolbar .btn-icon {
+:is(.toolbar, .canvas-controls, .file-bar) .btn-icon {
   display: grid;
   place-items: center;
   width: 26px;
@@ -168,22 +151,22 @@ button:disabled {
 /* A pressed toggle is a stamped block: the accent at full strength with paper
    knocked out of it. Reserved for this and nothing larger.
 
-   Selector weight matters here: .toolbar .btn-toggle is (0,2,0) and would beat
+   Selector weight matters here: :is(.toolbar, .canvas-controls, .file-bar) .btn-toggle is (0,2,0) and would beat
    a bare button[aria-pressed] whatever the source order, which left an "on"
    toggle wearing the flat rest state and only an accent edge to say so. */
 button[aria-pressed='true'],
-.toolbar .btn-toggle[aria-pressed='true'] {
+:is(.toolbar, .canvas-controls, .file-bar) .btn-toggle[aria-pressed='true'] {
   background: var(--surface-accent);
   border-color: var(--surface-accent);
   color: var(--text-on-accent);
 }
 
-.toolbar .btn-toggle[aria-pressed='true']::before,
-.toolbar .btn-toggle[aria-pressed='true']:hover::before {
+:is(.toolbar, .canvas-controls, .file-bar) .btn-toggle[aria-pressed='true']::before,
+:is(.toolbar, .canvas-controls, .file-bar) .btn-toggle[aria-pressed='true']:hover::before {
   background: var(--surface-accent);
 }
 
-.toolbar .btn-toggle[aria-pressed='true']:hover {
+:is(.toolbar, .canvas-controls, .file-bar) .btn-toggle[aria-pressed='true']:hover {
   background: var(--surface-accent);
   color: var(--text-on-accent);
 }
@@ -232,24 +215,14 @@ button[aria-pressed='true'],
 .workspace {
   display: grid;
 
-  /* Panel widths are variables so collapsing is one substitution rather than a
-     second grid definition. They also shrink before they collapse: at 1100px
-     the pair of them would otherwise take two thirds of the window. */
-  --rail: 26px;
-  --panel-left: clamp(220px, 22vw, 300px);
-  --panel-right: clamp(260px, 26vw, 340px);
+  /* --dock is the dragged width, set inline from the store. The store clamps
+     it against the window at drag time; this clamps it again for a window
+     that shrinks afterwards, so the canvas keeps 360px whatever was dragged. */
+  --dock: 300px;
 
-  grid-template-columns: var(--panel-left) minmax(0, 1fr) var(--panel-right);
+  grid-template-columns: max(220px, min(var(--dock), calc(100vw - 360px))) minmax(0, 1fr);
   flex: 1 1 auto;
   min-height: 0;
-}
-
-.workspace[data-left='closed'] {
-  --panel-left: var(--rail);
-}
-
-.workspace[data-right='closed'] {
-  --panel-right: var(--rail);
 }
 
 .col {
@@ -259,115 +232,140 @@ button[aria-pressed='true'],
   flex-direction: column;
 }
 
-/* The columns anchor the edge handle, which is positioned against the seam. */
-.col-left,
-.col-right {
+/* The column anchors the resize handle, which is positioned against the seam. */
+.col-dock {
   flex-direction: row;
   position: relative;
-}
-
-.col-left {
   border-right: var(--hairline);
 }
 
-.col-right {
-  border-left: var(--hairline);
-}
-
-/* The right column stacks two panels; the left has one that fills it. */
-.col-left > .panel,
-.col-stack {
+.dock {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.col-stack {
+/* ---------------------------------------------------------- dock */
+
+/* The sections stack, and the open ones split the height evenly. A shut one
+   is only its head, so it gives its share to the others. A zero basis is what
+   makes the split even: on an auto basis the section with the most content
+   would take the most room, and the code box would shove the list off. */
+.dock {
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-/* ----------------------------------------------------- collapsed panel */
+.dock > .panel {
+  flex: 0 0 auto;
+  height: auto;
+}
 
-/* A collapsed panel is the panel, narrowed — not a rail bolted to the side of
-   the workspace. It keeps the surface, the head band and the rule under it, so
-   the closed state reads as the same object as the open one. */
-.panel-collapsed {
+.dock > .panel[data-open='true'] {
+  flex: 1 1 0;
+}
+
+/* Open and Save, pinned above the sections. It never folds and never gives
+   up height: flex: none keeps it its own size while the sections below share
+   whatever is left. */
+.file-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--hairline);
+  background: var(--surface-panel);
+}
+
+/* Sections are divided by the rule above each, so a run of shut heads reads
+   as a run of bands. A shut head drops its own rule, which would double the
+   next section's. The colour goes, not the border, so every head stays the
+   same height. */
+.dock > .panel + .panel {
+  border-top: var(--hairline);
+}
+
+.dock > .panel[data-open='false'] > .panel-head {
+  border-bottom-color: transparent;
+}
+
+.panel-body {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
   flex: 1 1 auto;
+  min-height: 0;
+}
+
+.panel-body[hidden] {
+  display: none;
+}
+
+/* The whole title is the disclosure, not just the chevron. */
+.section-head {
+  gap: var(--space-2);
+}
+
+.section-toggle {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-2);
   min-width: 0;
+  height: 100%;
   padding: 0;
+  background: none;
   border: none;
-  background: var(--surface-panel);
-  color: var(--text-muted);
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.panel-collapsed .panel-head {
-  padding: 0;
+.section-toggle:hover:not(:disabled) {
+  background: none;
+  border: none;
+  color: var(--text-primary);
 }
 
-/* --------------------------------------------------------- edge handle */
+/* --------------------------------------------------------- resize seam */
 
-/* The grip sits ON the seam, because the seam is what moves — and at the top,
-   in the head band, level with the panel's title. --head-height is the same
-   token the head uses, so the two cannot drift apart and the handle's bottom
-   rule is a continuation of the head's own.
-
-   It stays put when the panel does: the handle is anchored to the column, not
-   to the panel inside it, so reopening is where closing was. */
-.edge-toggle {
+/* The seam between the dock and the canvas, dragged to resize the dock. The
+   column already draws the rule; this is a wider, invisible grip over it that
+   lights the rule up on hover, while dragging, and when it has focus — so the
+   affordance shows itself without a permanent handle cluttering the edge. */
+.dock-resizer {
   position: absolute;
   top: 0;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  width: var(--edge-toggle-w);
-  height: var(--head-height);
-  padding: 0;
-  background: var(--surface-panel);
-  border: none;
-  border-bottom: var(--hairline);
-  color: var(--text-muted);
+  right: -4px;
+  bottom: 0;
+  z-index: 4;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
 }
 
-/* Flush to the seam. The column already draws the rule there, so the handle
-   takes no edge of its own on that side and reads as part of the divider.
-
-   Every head in the column reserves the width on that side, not just the
-   topmost one: the handle only covers the first, but indenting one head and
-   not the other would leave them out of line down the column. */
-.col-left .edge-toggle {
-  right: 0;
+.dock-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: transparent;
+  transition: background-color var(--dur-detent) var(--ease-out);
 }
 
-.col-left .panel-head {
-  padding-right: calc(var(--space-3) + var(--edge-toggle-w));
+.dock-resizer:hover::after,
+.dock-resizer:active::after,
+.dock-resizer:focus-visible::after {
+  background: var(--text-accent);
 }
 
-.col-right .edge-toggle {
-  left: 0;
-}
-
-.col-right .panel-head {
-  padding-left: calc(var(--space-3) + var(--edge-toggle-w));
-}
-
-.edge-toggle:hover:not(:disabled) {
-  background: var(--surface-hover);
-  border-color: var(--text-accent);
-  color: var(--text-accent);
-}
-
-/* The panel's own name, set down the strip. Sideways is what makes the closed
-   state still say which panel it is, which a bare chevron cannot. */
-.panel-collapsed-label {
-  writing-mode: vertical-rl;
-  margin: var(--space-3) auto auto;
-  font-size: var(--text-2xs);
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
+.dock-resizer:focus-visible {
+  outline: none;
 }
 
 .chev {
@@ -376,22 +374,66 @@ button[aria-pressed='true'],
   flex: none;
 }
 
-.chev[data-point='left'] {
-  transform: rotate(180deg);
+.chev[data-point='down'] {
+  transform: rotate(90deg);
 }
 
 
 .col-canvas {
   background: var(--canvas-face);
   padding: var(--space-4);
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
 
-  /* The artboard is the largest square that fits THIS box, so the box has to
-     be measurable. A size container exposes both of its content-box axes as
-     cqw/cqh, which is the only way to say "min(my width, my height)" in CSS
-     without guessing at one of them. */
-  container-type: size;
+  /* Anchors the zoom controls floated over it. */
+  position: relative;
+}
+
+/* Controls floated in the canvas's corners: the view toggles top left, undo
+   and redo top right, zoom bottom left. Above the artboard in the stacking
+   order, with no plate of their own: the buttons carry their own rim and face,
+   so they stand on the ground as they are. */
+.canvas-controls {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.canvas-controls-top-left {
+  top: var(--space-3);
+  left: var(--space-3);
+}
+
+.canvas-controls-top-right {
+  top: var(--space-3);
+  right: var(--space-3);
+
+  /* The status readouts sit over Undo and Redo, both flush right. */
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.readouts {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.canvas-controls-bottom-left {
+  bottom: var(--space-3);
+  left: var(--space-3);
+
+  /* Two groups share this corner: zoom, and align while there is a
+     selection. Wider apart than the buttons inside each, so they read as two
+     jobs rather than one row of six. */
+  gap: var(--space-4);
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .panel {
@@ -439,19 +481,16 @@ button[aria-pressed='true'],
 /* ---------------------------------------------------------- canvas */
 
 .canvas {
-  /* The largest square the column can hold.
+  /* The whole column, not the largest square in it.
      ---------------------------------------------------------------------
-     This used to be min(100%, 78vh): width-bound, with a guess at the
-     height. The guess was wrong in both directions. On a portrait screen
-     the column is far taller than 78vh is generous, so a 1200x1920 window
-     drew a 592px artboard inside a 624x1840 column and left 1200px of
-     empty ground under it. And 78vh is measured against the viewport, not
-     the column, so it never noticed the toolbar wrapping to three rows or
-     the side panels collapsing.
-     100cqh is the column's own content height. min() against 100% picks
-     whichever axis actually binds, which is the definition of fitting. */
-  width: min(100%, 100cqh);
-  aspect-ratio: 1;
+     It used to be min(100%, 100cqh) with an aspect ratio of 1, which fits
+     the artboard at Fit but crops everything else to a square: zoomed in,
+     the icon was cut off at the square's sides with half the column empty
+     beside it. Now the SVG fills the column and the view takes its shape
+     (viewStore's aspect), so Fit still frames the artboard across the short
+     side and the long side shows the ground and geometry around it. */
+  width: 100%;
+  height: 100%;
   touch-action: none;
   cursor: default;
   color: var(--text-primary);
@@ -613,11 +652,6 @@ button[aria-pressed='true'],
   line-height: 1.6;
 }
 
-.hint {
-  border-top: var(--hairline);
-  margin-top: auto;
-}
-
 /* ---------------------------------------------------------- code */
 
 /* The editor and its marking overlay are stacked in one box. Everything that
@@ -629,6 +663,17 @@ button[aria-pressed='true'],
   flex: 1 1 auto;
   min-height: 0;
   background: var(--canvas-face);
+}
+
+/* The text and the canvas disagree: a warning rule down the editor's edge,
+   so the state is visible from the text itself and not only from the head. */
+.code-wrap[data-stale='true']::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--signal-warn);
+  pointer-events: none;
 }
 
 .code {
@@ -931,14 +976,21 @@ button[aria-pressed='true'],
 
 /* ---------------------------------------------------------- hints */
 
+/* The shortcut list. Its own dock section now, not a footer pinned under the
+   element list, so it takes no rule or push of its own: the section head
+   above it does the separating. */
 .hint {
   display: grid;
+  align-content: start;
   gap: 3px;
-  margin: auto 0 0;
+  margin: 0;
   padding: 9px 10px;
-  border-top: var(--hairline);
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.panel-shortcuts > .panel-body {
+  overflow-y: auto;
 }
 
 .hint > div {
@@ -947,7 +999,7 @@ button[aria-pressed='true'],
 }
 
 .hint dt {
-  flex: 0 0 42px;
+  flex: 0 0 48px;
   color: var(--text-primary);
   font-weight: 600;
 }
@@ -958,47 +1010,8 @@ button[aria-pressed='true'],
 
 /* ---------------------------------------------------------- conformance */
 
-.panel-conformance {
-  flex: 0 0 auto;
-  border-top: var(--hairline);
-  height: auto;
-  max-height: 55%;
+.panel-conformance > .panel-body {
   overflow-y: auto;
-}
-
-.conformance-head {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  width: 100%;
-  background: var(--surface-panel);
-  border: none;
-  border-bottom: var(--edge-weight) solid transparent;
-  cursor: pointer;
-}
-
-.panel-conformance.is-open .conformance-head {
-  border-bottom-color: var(--edge);
-}
-
-.conformance-head:hover {
-  border: none;
-  border-bottom: var(--edge-weight) solid transparent;
-  color: var(--text-primary);
-}
-
-.panel-conformance.is-open .conformance-head:hover {
-  border-bottom-color: var(--edge);
-}
-
-.conformance-label {
-  flex: 1 1 auto;
-  text-align: left;
-}
-
-.twist {
-  font-size: 9px;
-  color: var(--text-muted);
 }
 
 .score {

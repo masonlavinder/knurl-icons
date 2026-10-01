@@ -17,7 +17,7 @@ import {
   updateDrag,
 } from '../../store/dragSession.ts';
 import { useSelectionStore } from '../../store/selectionStore.ts';
-import { useViewStore } from '../../store/viewStore.ts';
+import { span, useViewStore } from '../../store/viewStore.ts';
 import { nodeColor } from '../nodeColor.ts';
 import { GridLayer } from './GridLayer.tsx';
 
@@ -57,6 +57,7 @@ export function CanvasRoot(): React.JSX.Element {
   const viewBox = useViewStore((s) => s.viewBox);
   const zoom = useViewStore((s) => s.zoom);
   const setZoom = useViewStore((s) => s.setZoom);
+  const setAspect = useViewStore((s) => s.setAspect);
   const zoomBy = useViewStore((s) => s.zoomBy);
   const panBy = useViewStore((s) => s.panBy);
 
@@ -67,13 +68,20 @@ export function CanvasRoot(): React.JSX.Element {
   const toggle = useSelectionStore((s) => s.toggle);
   const clear = useSelectionStore((s) => s.clear);
 
-  /** Measure zoom from the live CTM rather than tracking it separately. */
+  /**
+   * Measure zoom from the live CTM rather than tracking it separately, and
+   * hand the element's shape to the view so the viewBox matches it — the SVG
+   * fills the whole canvas column, not a square inside it.
+   */
   const measureZoom = useCallback(() => {
     const svg = svgRef.current;
     if (!svg) return;
+    if (svg.clientWidth > 0 && svg.clientHeight > 0) {
+      setAspect(svg.clientWidth / svg.clientHeight);
+    }
     const ctm = svg.getScreenCTM();
     if (ctm) setZoom(ctm.a);
-  }, [setZoom]);
+  }, [setAspect, setZoom]);
 
   useEffect(() => {
     measureZoom();
@@ -107,10 +115,11 @@ export function CanvasRoot(): React.JSX.Element {
       const key = target?.getAttribute('data-addr');
       if (!key) {
         // Empty canvas: drag pans, click clears. Which one it was is not known
-        // yet, so take the capture and decide at pointerup.
+        // yet, so take the capture and decide at pointerup. The grabbing hand
+        // waits for the drag to show itself too — set here, every plain click
+        // on the ground flashed a hand for the length of the press.
         downRef.current = null;
         panRef.current = { x: e.clientX, y: e.clientY, moved: false, clearOnUp: true };
-        setPanning(true);
         e.currentTarget.setPointerCapture(e.pointerId);
         return;
       }
@@ -162,7 +171,10 @@ export function CanvasRoot(): React.JSX.Element {
         const dy = e.clientY - pan.y;
         // A couple of pixels of travel is a click with a shaky hand, not a
         // drag. Below the threshold the selection still clears on release.
-        if (!pan.moved && Math.hypot(dx, dy) > PAN_THRESHOLD_PX) pan.moved = true;
+        if (!pan.moved && Math.hypot(dx, dy) > PAN_THRESHOLD_PX) {
+          pan.moved = true;
+          setPanning(true);
+        }
         panBy(dx * k, dy * k);
         pan.x = e.clientX;
         pan.y = e.clientY;
@@ -253,7 +265,7 @@ export function CanvasRoot(): React.JSX.Element {
         zoomBy(Math.exp(-e.deltaY / 200), center);
       } else {
         const vb = useViewStore.getState().viewBox;
-        const k = vb.w / 24;
+        const k = span(vb) / 24;
         panBy(-e.deltaX * k * 0.05, -e.deltaY * k * 0.05);
       }
     },
