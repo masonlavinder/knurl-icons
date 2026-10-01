@@ -55,14 +55,14 @@
     --font-mono: 'Inconsolata', ui-monospace, 'SF Mono', monospace;
     --font-sans: var(--font-mono);
 
-    --text-2xs:  11px;   /* status chips */
-    --text-xs:   12px;   /* part numbers, mono labels */
-    --text-sm:   14px;
-    --text-base: 16px;   /* body — mono needs a step up to hold a line */
-    --text-lg:   22px;
-    --text-xl:   34px;
-    --text-2xl:  52px;
-    --text-3xl:  76px;   /* page h1 */
+    --text-2xs:  12px;   /* status chips */
+    --text-xs:   14px;   /* part numbers, mono labels */
+    --text-sm:   16px;
+    --text-base: 18px;   /* body — mono needs a step up to hold a line */
+    --text-lg:   25px;
+    --text-xl:   38px;
+    --text-2xl:  58px;
+    --text-3xl:  86px;   /* page h1 */
 
     --leading-display: 0.95;   /* oversized headings set tight */
     --leading-tight: 1.15;
@@ -107,21 +107,17 @@
     --hairline:   var(--edge-weight) solid var(--edge);
     --hairline-strong: 3px solid var(--edge-strong);
 
-    /* knurl: 2px lines on a 7px pitch, crossed at 45 degrees.
-       Two families of lines spaced --knurl-pitch apart and crossing at a
-       right angle make a square lattice standing on its corner, so one row
-       of diamonds is pitch x sqrt(2) tall. Strips are sized in whole rows;
-       anything else clips the bottom row. */
-    --knurl-line:  var(--lavinder-600);
-    --knurl-width: 2px;
-    --knurl-pitch: 7px;
-    --knurl-row:   calc(var(--knurl-pitch) * 1.41421356);
+    /* The banner's geometry lives in Knurl.tsx: it is an SVG pattern, and a
+       pattern's tile size cannot read a custom property. Only the colour
+       crosses over, on the stroke. */
+    --knurl-line: var(--lavinder-600);
 
-    /* Every strip in the studio is this tall — the header, the footer, and the
-       band a section heading is set into. One token so they cannot drift; a
-       section break that is a different depth from the header reads as a
-       different mark rather than the same one. */
-    --knurl-strip: 16px;
+    /* The mark's grain is solid teeth, not the banner's outlines: at 22px an
+       outline reads as noise. Its tile has two axes — --knurl-tooth across
+       and --knurl-tooth-h down — so the glyph can carry teeth side by side
+       without a second row seaming across it. */
+    --knurl-tooth:   8px;
+    --knurl-tooth-h: var(--knurl-tooth);
 
     /* ---- motion ----------------------------------------------------- */
     --dur-fast:   70ms;

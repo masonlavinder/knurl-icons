@@ -159,10 +159,11 @@
     overflow: hidden;
   }
 
-  /* 13px was the app's base. The studio sets 16px because mono prose needs
-     the step up, but a panel of numbers is not prose and 16px mono costs a
-     column of the inspector. 14px is the compromise: --text-sm as the base,
-     with the scale above it untouched. */
+  /* --text-sm as the base: 16px, one step under the studio's 18px body.
+     The studio sets 18px because mono prose needs the step up; a panel of
+     numbers is not prose, and 18px mono would cost a column of the
+     inspector. It was 14px until the studio's scale moved up a step, which
+     read as too small to work at. */
   body {
     font-size: var(--text-sm);
     line-height: var(--leading-snug);
