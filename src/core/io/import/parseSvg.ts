@@ -52,7 +52,13 @@ function collect(
 
     if (GEOMETRY.has(tag)) {
       const el = convert(child, ds);
-      if (el) out.push(el);
+      if (el) {
+        // The author's label, if the file carries one. The parser has already
+        // decoded entities, so this is the name as written.
+        const name = child.attrs['data-name']?.trim();
+        if (name) el.name = name;
+        out.push(el);
+      }
       continue;
     }
 

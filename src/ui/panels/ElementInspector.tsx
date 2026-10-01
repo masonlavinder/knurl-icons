@@ -1,7 +1,12 @@
 import { deleteAddresses } from '../../core/commands/ops/deleteAddresses.ts';
-import { setClosed, setElementField, setElementFill } from '../../core/commands/ops/editElement.ts';
+import {
+  setClosed,
+  setElementField,
+  setElementFill,
+  setElementName,
+} from '../../core/commands/ops/editElement.ts';
 import { appendNode, insertNode, isCurvedNode, setNodeCurved } from '../../core/commands/ops/nodeOps.ts';
-import { nodeListsOf } from '../../core/model/access.ts';
+import { describeElement, nodeListsOf } from '../../core/model/access.ts';
 import { encodeAddr } from '../../core/model/address.ts';
 import type { Address, Element } from '../../core/model/types.ts';
 import { round } from '../../core/path/num.ts';
@@ -29,6 +34,24 @@ export function ElementInspector({ el }: { el: Element }): React.JSX.Element {
 
   return (
     <div className="inspector">
+      <label className="insp-field insp-name">
+        <span>Name</span>
+        {/* The placeholder is what the row shows when there is no name, so an
+            empty field says what you would be replacing. Blurring tidies
+            stray spaces; a blank clears the name. */}
+        <input
+          type="text"
+          value={el.name ?? ''}
+          placeholder={describeElement(el)}
+          spellCheck={false}
+          onChange={(e) => dispatch(setElementName(el.id, e.target.value))}
+          onBlur={(e) => {
+            const trimmed = e.target.value.trim();
+            if (trimmed !== (el.name ?? '')) dispatch(setElementName(el.id, trimmed));
+          }}
+        />
+      </label>
+
       {shapeFields(el).map((group) => (
         <div className="insp-group" key={group.title}>
           <span className="insp-title">{group.title}</span>

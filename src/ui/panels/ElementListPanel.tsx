@@ -126,7 +126,16 @@ export function ElementListPanel(): React.JSX.Element {
                       <span className="thumb" aria-hidden="true">
                         {glyph(el)}
                       </span>
-                      <span className="label">{describeElement(el)}</span>
+                      <span className="label">
+                        {el.name?.trim() ? (
+                          <>
+                            {el.name.trim()}{' '}
+                            <span className="label-kind">{describeElement(el)}</span>
+                          </>
+                        ) : (
+                          describeElement(el)
+                        )}
+                      </span>
                     </button>
                     <div className="row-actions">
                       <button
@@ -148,7 +157,7 @@ export function ElementListPanel(): React.JSX.Element {
                       <button
                         type="button"
                         className="row-del"
-                        aria-label={`Delete ${describeElement(el)}`}
+                        aria-label={`Delete ${el.name?.trim() || describeElement(el)}`}
                         onClick={() => dispatch(deleteAddresses([addr]))}
                       >
                         ×

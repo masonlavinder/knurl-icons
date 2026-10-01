@@ -638,6 +638,18 @@ button[aria-pressed='true'],
   white-space: nowrap;
 }
 
+/* A named row leads with the name; what kind of shape it is follows, quieter,
+   so the list still says what is a circle and what is a path. */
+.label-kind {
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+.row-wrap.is-selected .label-kind {
+  color: inherit;
+  opacity: 0.75;
+}
+
 .idx,
 .count {
   color: var(--text-muted);
@@ -888,6 +900,12 @@ button[aria-pressed='true'],
 
 .insp-group + .insp-group {
   margin-top: 8px;
+}
+
+/* The name runs the full width above the number grids, which it is not one
+   of: it is text, and it labels the whole element. */
+.insp-name {
+  margin-bottom: 8px;
 }
 
 .insp-title {

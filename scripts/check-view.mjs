@@ -397,6 +397,31 @@ ok('the selection survives each move', await alignGroup.isVisible());
 await p.keyboard.press('Escape');
 ok('clearing the selection hides them again', (await alignGroup.count()) === 0);
 
+// -- naming elements -------------------------------------------------------
+// A name is typed in the inspector, shows in the list, and travels in the
+// file as data-name — so an edit in the SVG panel keeps it.
+await p.reload({ waitUntil: 'networkidle' });
+await p.waitForSelector('.canvas');
+await p.locator('.element-list .row-twist').first().click();
+const nameField = p.locator('.insp-name input');
+ok('an element has a name field', await nameField.isVisible());
+ok('which suggests what it would replace', (await nameField.getAttribute('placeholder')) === 'circle');
+await nameField.fill('face ring');
+ok('the list shows the name', (await p.locator('.element-list .label').first().textContent()).startsWith('face ring'));
+ok('and still says what kind of shape it is', (await p.locator('.element-list .label-kind').first().textContent()) === 'circle');
+await nameField.blur();
+ok('the name is written to the SVG', (await p.locator('.code-input').inputValue()).includes('<circle data-name="face ring"'));
+const named = await p.locator('.code-input').inputValue();
+await p.locator('.code-input').fill(named.replace('r="10"', 'r="9"'));
+await p.locator('.code-input').blur();
+await p.waitForTimeout(300);
+ok('an edit in the SVG panel keeps the name', (await p.locator('.element-list .label').first().textContent()).startsWith('face ring'));
+// The panel edit re-imports the document, so the row comes back shut.
+await p.locator('.element-list .row-twist').first().click();
+await p.locator('.insp-name input').fill('');
+await p.locator('.insp-name input').blur();
+ok('clearing the field removes the name', !(await p.locator('.code-input').inputValue()).includes('data-name'));
+
 ok('no console errors', errs.length === 0, errs.join(' | '));
 console.log(fails === 0 ? '\nall checks passed' : `\n${fails} FAILED`);
 await b.close();

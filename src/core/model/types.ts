@@ -55,7 +55,12 @@ export type Subpath = {
  */
 export type Fill = 'none' | 'currentColor';
 
-type Base = { id: Id; fill?: Fill };
+/**
+ * `name` is the author's label for an element, written to the file as
+ * `data-name`. Optional and purely descriptive: nothing in the editor keys off
+ * it, and an unnamed element serializes exactly as upstream's do.
+ */
+type Base = { id: Id; fill?: Fill; name?: string };
 
 /**
  * Primitives stay primitives. Upstream ships `<circle>`, `<rect>`, `<line>` and

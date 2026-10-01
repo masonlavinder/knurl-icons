@@ -38,6 +38,7 @@ export function checkConformance(doc: IconDoc): RuleResult[] {
     transformRule(),
     paddingRule(doc),
     nameRule(doc),
+    elementNamesRule(doc),
     precisionRule(doc),
     nodeBudgetRule(doc),
   ];
@@ -162,6 +163,25 @@ function nameRule(doc: IconDoc): RuleResult {
     status: ok ? 'pass' : 'fail',
     detail: ok ? `"${doc.name}" → <${toPascal(doc.name)} />` : `"${doc.name}" is not kebab-case`,
     addrs: [],
+  };
+}
+
+/**
+ * Element names are this editor's metadata. Upstream icons carry nothing but
+ * geometry, so a named element is something to strip before submitting —
+ * worth saying, not worth failing over.
+ */
+function elementNamesRule(doc: IconDoc): RuleResult {
+  const named = doc.elements.filter((el) => el.name?.trim());
+  return {
+    code: 'ELEMENT_NAMES',
+    title: 'no element names',
+    status: named.length === 0 ? 'pass' : 'warn',
+    detail:
+      named.length === 0
+        ? 'nothing to strip before submitting'
+        : `${named.length} named — data-name is editor metadata; strip it before submitting upstream`,
+    addrs: named.map((el) => ({ el: el.id })),
   };
 }
 

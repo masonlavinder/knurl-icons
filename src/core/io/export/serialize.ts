@@ -52,5 +52,20 @@ function renderElement(el: Element): string | null {
   }
   if (el.fill !== undefined) parts.push(`fill="${el.fill}"`);
 
+  // First, so a name reads as the label of the line it starts. Trimmed here
+  // rather than in the model so a name can hold a trailing space while it is
+  // being typed; blank is the same as absent.
+  const name = el.name?.trim();
+  if (name) parts.unshift(`data-name="${escapeAttr(name)}"`);
+
   return `<${tag} ${parts.join(' ')} />`;
+}
+
+/** A name is free text; geometry attributes never need this. */
+function escapeAttr(v: string): string {
+  return v
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }

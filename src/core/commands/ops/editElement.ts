@@ -37,6 +37,24 @@ export function setElementField(elId: Id, path: FieldPath, value: number): Comma
   );
 }
 
+/**
+ * Name an element, or clear its name with a blank. Stored as typed so the
+ * field can hold a space mid-word; the serializer trims. Typing into the same
+ * element's name is one undo step.
+ */
+export function setElementName(elId: Id, name: string): Command {
+  return command(
+    'Rename',
+    (draft) => {
+      const el = draft.elements.find((e) => e.id === elId);
+      if (!el) return;
+      if (name.trim() === '') delete el.name;
+      else el.name = name;
+    },
+    { mergeKey: `name:${elId}` },
+  );
+}
+
 export function setElementFill(elId: Id, fill: 'none' | 'currentColor' | undefined): Command {
   return command(`Set fill`, (draft) => {
     const el = draft.elements.find((e) => e.id === elId);

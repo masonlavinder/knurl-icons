@@ -18,7 +18,7 @@ describe('Lucide conformance', () => {
   it('passes a clean house-spec icon', () => {
     const rules = checkConformance({ ...doc('<circle cx="12" cy="12" r="10"/>'), name: 'circle-check' });
     const { pass, total } = conformanceScore(rules);
-    expect(total).toBe(8);
+    expect(total).toBe(9);
     expect(pass).toBe(total);
   });
 
