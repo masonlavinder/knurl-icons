@@ -618,20 +618,6 @@ button[aria-pressed='true'],
   border: none;
 }
 
-.row-del {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  padding: 0 10px;
-  font-size: 18px;
-  line-height: 1;
-}
-
-.row-del:hover {
-  color: var(--signal-fail);
-  border: none;
-}
-
 .thumb {
   display: grid;
   place-items: center;
@@ -848,12 +834,15 @@ button[aria-pressed='true'],
   outline: 1px solid var(--guide-pad);
 }
 
+/* Row controls fill the row's height and take a fixed width, so the click
+   target is a column of the row rather than the glyph's own few pixels. */
 .row-twist {
+  min-width: 24px;
   background: none;
   border: none;
   color: var(--text-muted);
-  padding: 0 4px 0 6px;
-  font-size: 12px;
+  padding: 0;
+  font-size: 14px;
 }
 
 .row-twist:hover {
@@ -873,11 +862,13 @@ button[aria-pressed='true'],
 }
 
 .row-actions button {
+  align-self: stretch;
+  min-width: 28px;
   background: none;
   border: none;
   color: var(--text-muted);
-  padding: 0 5px;
-  font-size: 13px;
+  padding: 0;
+  font-size: 16px;
 }
 
 .row-actions button:hover:not(:disabled) {
@@ -1204,11 +1195,13 @@ button[aria-pressed='true'],
 }
 
 .node-ops button {
+  min-width: 22px;
+  min-height: 22px;
   background: none;
   border: none;
   color: var(--text-muted);
-  padding: 0 4px;
-  font-size: 15px;
+  padding: 0;
+  font-size: 17px;
   line-height: 1;
 }
 
@@ -1232,16 +1225,21 @@ button[aria-pressed='true'],
   opacity: 0.45;
 }
 
-.row-del {
+/* Scoped under .row-actions: it is one of that group's buttons, and the
+   group's own button rule would otherwise outrank a bare .row-del — which is
+   how the delete cross came out the arrows' size. */
+.row-actions .row-del {
+  align-self: stretch;
+  min-width: 30px;
   background: none;
   border: none;
   color: var(--text-muted);
-  padding: 0 7px;
-  font-size: 17px;
+  padding: 0;
+  font-size: 20px;
   line-height: 1;
 }
 
-.row-del:hover {
+.row-actions .row-del:hover:not(:disabled) {
   color: var(--signal-fail);
   border: none;
 }
