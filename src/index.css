@@ -134,6 +134,22 @@ button:disabled {
 
 :is(.toolbar, .canvas-controls, .file-bar) .btn-toggle::before {
   background: var(--surface-panel);
+
+  /* A toggle's flat face makes its rim the whole outline, and on the cut that
+     rim is thinner than on the sides: shrinking the face's cut by the full
+     edge weight leaves a perpendicular gap of only 1/sqrt(2) of it along the
+     diagonal. Shrinking it by (2 - sqrt(2)) of the weight instead makes the
+     gap exactly one edge wide, so a hovered toggle is outlined evenly all the
+     way round. Toggles only: on a raised button the face carries the shape
+     and the thinner cut does not show. */
+  clip-path: polygon(
+    calc(var(--chamfer) - var(--edge-weight) * 0.5858) 0,
+    100% 0,
+    100% calc(100% - var(--chamfer) + var(--edge-weight) * 0.5858),
+    calc(100% - var(--chamfer) + var(--edge-weight) * 0.5858) 100%,
+    0 100%,
+    0 calc(var(--chamfer) - var(--edge-weight) * 0.5858)
+  );
 }
 
 :is(.toolbar, .canvas-controls, .file-bar) .btn-icon {
