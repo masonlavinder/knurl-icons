@@ -153,7 +153,7 @@ function paddingRule(doc: IconDoc): RuleResult {
   };
 }
 
-const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+export const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 function nameRule(doc: IconDoc): RuleResult {
   const ok = KEBAB.test(doc.name);

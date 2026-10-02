@@ -10,7 +10,7 @@
  */
 import { chromium } from 'playwright';
 
-const URL = process.argv[2] ?? 'http://localhost:5199/';
+const URL = process.argv[2] ?? 'http://localhost:5199/editor/';
 const results = [];
 const record = (name, pass, detail = '') => {
   results.push({ name, pass, detail });

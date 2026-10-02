@@ -39,11 +39,13 @@ describe('cascade order', () => {
   });
 
   it('imports every stylesheet before the component tree', () => {
-    const editor = at('./pages/Editor.tsx');
-    expect(editor).toBeGreaterThan(-1);
-
-    // Editor pulls in src/components/brand, whose modules open @layer components.
-    expect(at('../styles/global.css')).toBeLessThan(editor);
-    expect(at('./index.css')).toBeLessThan(editor);
+    // Every page pulls in src/components/brand, whose modules open
+    // @layer components.
+    for (const page of ['./pages/Home.tsx', './pages/Editor.tsx', './pages/Gallery.tsx']) {
+      const pos = at(page);
+      expect(pos, `${page} is not imported`).toBeGreaterThan(-1);
+      expect(at('../styles/global.css')).toBeLessThan(pos);
+      expect(at('./index.css')).toBeLessThan(pos);
+    }
   });
 });

@@ -1,0 +1,92 @@
+name: Accept icon
+
+# A maintainer applying `approved` to an icon-submission issue opens a pull
+# request that adds the icon to library/. Merging that PR is what publishes it:
+# the merge is a push to main, so the deploy workflow runs as for any commit.
+#
+# Labels can only be applied by people with triage access, so nothing here runs
+# for a submission until someone has looked at it.
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: accept-icon-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  accept:
+    if: >-
+      github.event.label.name == 'approved' &&
+      contains(github.event.issue.labels.*.name, 'icon-submission')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      NUMBER: ${{ github.event.issue.number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The body and author are untrusted text, so they travel as environment
+      # variables. Interpolating them into a `run:` line would let an issue
+      # body run commands.
+      - id: icon
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        run: node scripts/accept-icon.ts
+
+      # NAME has already been checked against the kebab-case rule, so it is
+      # safe in a branch name and a commit message.
+      - env:
+          NAME: ${{ steps.icon.outputs.name }}
+        run: |
+          branch="icon/$NAME"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$branch"
+          git add "library/$NAME.svg" "library/$NAME.json"
+          git commit -m "Add $NAME icon" -m "Closes #$NUMBER"
+          git push --force origin "$branch"
+
+          # Pinned to the commit, so the preview shows exactly what merges
+          # even if the branch is pushed again.
+          sha=$(git rev-parse HEAD)
+          file="${{ github.server_url }}/${{ github.repository }}/blob/$sha/library/$NAME.svg"
+          preview() {
+            printf '<img src="%s?raw=true" width="96" height="96" alt="%s">\n\n' "$file" "$NAME"
+            printf 'Generated file: [`library/%s.svg`](%s)\n' "$NAME" "$file"
+          }
+
+          if gh pr view "$branch" > /dev/null 2>&1; then
+            pr=$(gh pr view "$branch" --json url --jq .url)
+          else
+            { printf 'Adds `%s` from #%s. Merging publishes it to the icon library.\n\n' "$NAME" "$NUMBER"
+              preview
+              printf '\nCloses #%s\n' "$NUMBER"; } > pr-body.md
+            pr=$(gh pr create --head "$branch" --title "Add $NAME icon" --body-file pr-body.md)
+          fi
+
+          { printf 'Approved: %s\n\n' "$pr"; preview; } > issue-comment.md
+          gh issue comment "$NUMBER" --body-file issue-comment.md
+
+      - if: failure()
+        run: |
+          if [ -f accept-error.md ]; then
+            gh issue comment "$NUMBER" --body-file accept-error.md
+          else
+            gh issue comment "$NUMBER" --body "Something went wrong adding this icon: see ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import { Mark } from '../components/brand/Mark.tsx';
 import { StudioFooter } from '../components/brand/StudioFooter.tsx';
+import { Toolbar } from '../components/Toolbar.tsx';
 import { alignSelection, centerSelection } from '../core/commands/ops/centerSelection.ts';
+import { checkConformance } from '../core/io/import/lint.ts';
 import { parseSvg } from '../core/io/import/parseSvg.ts';
 import { serialize } from '../core/io/export/serialize.ts';
 import type { IconDoc } from '../core/model/types.ts';
@@ -21,6 +22,7 @@ import { CodePanel } from '../components/panels/CodePanel.tsx';
 import { ConformancePanel } from '../components/panels/ConformancePanel.tsx';
 import { ElementListPanel } from '../components/panels/ElementListPanel.tsx';
 import { ShortcutsPanel } from '../components/panels/ShortcutsPanel.tsx';
+import { submitLink } from '../utils/submission.ts';
 
 /** The platform's command key, as the shortcut hints spell it. */
 const MOD =
@@ -60,7 +62,7 @@ export default function Editor(): React.JSX.Element {
 
   return (
     <div className="app">
-      <Toolbar />
+      <Toolbar page="editor" />
       <Workspace />
       <StudioFooter />
     </div>
@@ -307,7 +309,7 @@ function ZoomControls(): React.JSX.Element {
 }
 
 /**
- * Open and Save, fixed at the head of the dock above every section.
+ * Open, Save and Submit, fixed at the head of the dock above every section.
  *
  * Not a section: there is nothing to fold away, and the two things you do to
  * a file should not move or disappear depending on which sections are open.
@@ -355,6 +357,21 @@ function FileBar(): React.JSX.Element {
     URL.revokeObjectURL(url);
   }, []);
 
+  /**
+   * Offer the icon to the public library: a GitHub issue, pre-filled, that a
+   * maintainer approves into a pull request. Only offered once the icon passes
+   * every conformance rule, since the workflow would refuse it anyway.
+   */
+  const conforms = useDocStore((s) => checkConformance(s.doc).every((r) => r.status !== 'fail'));
+  const submit = useCallback(() => {
+    const doc = useDocStore.getState().doc;
+    const svg = serialize(doc);
+    const { url, svgInUrl } = submitLink(doc.name, svg);
+    // Too big for the link: the issue form says to paste it from here.
+    if (!svgInUrl) void navigator.clipboard.writeText(svg);
+    window.open(url, '_blank', 'noopener');
+  }, []);
+
   return (
     <div className="file-bar">
       <input
@@ -370,17 +387,18 @@ function FileBar(): React.JSX.Element {
       <button type="button" onClick={saveFile}>
         Save
       </button>
+      <button
+        type="button"
+        onClick={submit}
+        disabled={!conforms}
+        title={
+          conforms
+            ? 'Submit to the public icon library (opens GitHub)'
+            : 'Fix the failing conformance rules to submit'
+        }
+      >
+        Submit
+      </button>
     </div>
-  );
-}
-
-function Toolbar(): React.JSX.Element {
-  return (
-    <header className="toolbar">
-      <a className="lockup" href="https://knurled.studio">
-        <Mark size={20} />
-        <strong className="brand">Knurled Icons</strong>
-      </a>
-    </header>
   );
 }

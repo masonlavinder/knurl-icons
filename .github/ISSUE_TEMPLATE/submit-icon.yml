@@ -1,0 +1,48 @@
+# Opened pre-filled by the editor's Submit button. The field ids and labels are
+# read back by src/utils/submission.ts — change them together.
+name: Submit an icon
+description: Add an icon to the Knurled Icons library.
+title: 'Icon: '
+labels: [icon-submission]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Submissions are reviewed by hand. Once approved, a pull request adds the
+        icon to the library and it becomes free to download from
+        [icons.knurled.studio/icons](https://icons.knurled.studio/icons/).
+
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      description: kebab-case, like `gear-check`. This becomes the file name.
+      placeholder: gear-check
+    validations:
+      required: true
+
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated words people might search for.
+      placeholder: settings, done, cog
+
+  - type: textarea
+    id: svg
+    attributes:
+      label: SVG
+      description: |
+        Filled in by the editor. If it is empty, the icon was too large for the
+        link — the editor copied it to your clipboard, so paste it here.
+      render: xml
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: license
+    attributes:
+      label: License
+      options:
+        - label: I made this icon, and I release it under the MIT License.
+          required: true

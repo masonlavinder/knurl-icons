@@ -14,7 +14,7 @@
  */
 import { chromium } from 'playwright';
 
-const URL = process.argv[2] ?? 'http://localhost:5199/';
+const URL = process.argv[2] ?? 'http://localhost:5199/editor/';
 let fails = 0;
 const ok = (name, pass, detail = '') => {
   if (!pass) fails += 1;

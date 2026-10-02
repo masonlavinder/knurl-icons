@@ -1,13 +1,19 @@
 # Knurled Icons
 
-A browser icon editor for authoring and normalizing 24×24 stroke icons that conform to
-the Lucide / `lucide-react` standard. Built by Knurled Studio.
+A library of free 24×24 stroke icons that conform to the Lucide / `lucide-react`
+standard, and the browser editor they are made in. Built by Knurled Studio.
+
+| URL | Page |
+|---|---|
+| `/` | home |
+| `/icons/` | the public library, every icon downloadable at `/icons/<name>.svg` |
+| `/editor/` | the editor |
 
 ## Running it
 
 ```bash
 pnpm install
-pnpm dev              # http://localhost:5173
+pnpm dev              # http://localhost:5173 (editor at /editor/)
 ```
 
 ```bash
@@ -33,18 +39,28 @@ src/core/        pure. no react, no zustand, no DOM. node-testable, worker-movab
   io/            SVG import + deterministic serializer
   render/        element -> tag/attrs, shared by the serializer AND the canvas
   commands/      command + history types, delete semantics
-src/pages/       the editor page
+src/pages/       Home, Gallery (/icons/), Editor — one per HTML entry
 src/components/  brand (mark, footer), canvas layers, dock panels
 src/hooks/       keyboard
 src/stores/      zustand stores: document, selection, view, drag
 src/utils/       small helpers + DOM/XML adapters injected into core (browser + node)
 src/test/        corpus loader and comparison helpers shared by tests and scripts
 src/instrument.css  the one substrate deviation from the studio kit
+library/         the published icons: <name>.svg + <name>.json
 ```
 
 `src/core/**` must never import React, zustand, or touch `window`/`document`.
 That constraint is what makes moving the pipeline into a worker later a
 `postMessage` wrapper rather than a rewrite.
+
+## Submitting icons
+
+The editor's **Submit** button (enabled once every conformance rule passes)
+opens a pre-filled GitHub issue. Labelling it `approved` runs
+[accept-icon.yml](.github/workflows/accept-icon.yml), which re-parses and
+re-lints the SVG, writes the editor's own serializer output to `library/`, and
+opens a PR with a preview. Merging the PR deploys the icon. Icons are MIT
+licensed; see [LICENSE](LICENSE) and [library/README.md](library/README.md).
 
 ## Brand
 
