@@ -6,14 +6,14 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 const root = import.meta.dirname
-const library = join(root, 'library')
+const library = join(root, 'library', 'icons')
 
 /**
  * Serves every library icon at /icons/<name>.svg, in dev and in the build.
  *
  * The gallery inlines the icons it draws, but a download needs a real file at
  * a URL that does not change with the build hash, so people can link to one.
- * public/ would give that for free, except the files live in library/ with
+ * public/ would give that for free, except the files live in library/icons/ with
  * their metadata, and copying them by hand is exactly the drift to avoid.
  */
 function iconFiles() {

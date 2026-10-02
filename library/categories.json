@@ -1,0 +1,18 @@
+{
+  "editor": {
+    "title": "Editor",
+    "description": "Drawing and construction: nodes, guides, the artboard."
+  },
+  "hardware": {
+    "title": "Hardware",
+    "description": "Fasteners, springs, plates and other parts."
+  },
+  "measure": {
+    "title": "Measure",
+    "description": "Tools that measure, mark out or level."
+  },
+  "shapes": {
+    "title": "Shapes",
+    "description": "Primitive forms and surface finishes."
+  }
+}

@@ -21,11 +21,28 @@ body:
     validations:
       required: true
 
+  # One option per key in library/categories.json; src/library.test.ts fails
+  # if the two lists drift apart.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Where the icon is filed in the gallery.
+      options:
+        - editor
+        - hardware
+        - measure
+        - shapes
+    validations:
+      required: true
+
   - type: input
     id: tags
     attributes:
       label: Tags
-      description: Comma-separated words people might search for.
+      description: |
+        Comma-separated, lowercase words people might search for. Leave out
+        words already in the name.
       placeholder: settings, done, cog
 
   - type: textarea

@@ -27,6 +27,7 @@ pnpm corpus:drift     # byte-identity report against upstream
 pnpm kit:check        # verify the mirrored studio kit matches upstream
 node scripts/check-m0.mjs   # M0 gate, in a real browser (dev server must be up)
 pnpm check:view       # view gate: the icon cannot be panned or zoomed off screen
+pnpm library:format   # rewrite library icons as serializer output (library:check to verify)
 ```
 
 ## Layout
@@ -46,7 +47,7 @@ src/stores/      zustand stores: document, selection, view, drag
 src/utils/       small helpers + DOM/XML adapters injected into core (browser + node)
 src/test/        corpus loader and comparison helpers shared by tests and scripts
 src/instrument.css  the one substrate deviation from the studio kit
-library/         the published icons: <name>.svg + <name>.json
+library/         the published icons: icons/<name>.svg + .json, categories.json
 ```
 
 `src/core/**` must never import React, zustand, or touch `window`/`document`.
@@ -58,7 +59,7 @@ That constraint is what makes moving the pipeline into a worker later a
 The editor's **Submit** button (enabled once every conformance rule passes)
 opens a pre-filled GitHub issue. Labelling it `approved` runs
 [accept-icon.yml](.github/workflows/accept-icon.yml), which re-parses and
-re-lints the SVG, writes the editor's own serializer output to `library/`, and
+re-lints the SVG, writes the editor's own serializer output to `library/icons/`, and
 opens a PR with a preview. Merging the PR deploys the icon. Icons are MIT
 licensed; see [LICENSE](LICENSE) and [library/README.md](library/README.md).
 

@@ -10,11 +10,21 @@ beforeAll(() => {
 const SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">\n  <circle cx="12" cy="12" r="10" />\n</svg>';
 
 /** The body GitHub writes for a filed submit-icon.yml form. */
-const body = (fields: { name: string; tags: string; svg: string; license: string }): string =>
+const body = (fields: {
+  name: string;
+  category?: string;
+  tags: string;
+  svg: string;
+  license: string;
+}): string =>
   [
     '### Name',
     '',
     fields.name,
+    '',
+    '### Category',
+    '',
+    fields.category ?? 'hardware',
     '',
     '### Tags',
     '',
@@ -42,6 +52,7 @@ describe('parseSubmission', () => {
     );
     expect(s).toEqual({
       name: 'gear-check',
+      category: 'hardware',
       tags: ['settings', 'done', 'cog'],
       svg: SVG,
       licensed: true,
@@ -93,19 +104,21 @@ describe('acceptSubmission', () => {
     `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
   const sub = (over: Partial<Submission> = {}): Submission => ({
     name: 'ring',
-    tags: ['circle'],
+    category: 'shapes',
+    tags: ['circle', 'circle'],
     svg: house('<circle cx="12" cy="12" r="10"/>'),
     licensed: true,
     ...over,
   });
   const free = (): boolean => false;
+  const CATS = ['hardware', 'shapes'];
 
   it('writes serializer output and the contributor', () => {
-    const r = acceptSubmission(sub(), 'octocat', free);
+    const r = acceptSubmission(sub(), 'octocat', free, CATS);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.svg).toContain('<circle cx="12" cy="12" r="10" />');
-    expect(r.meta).toEqual({ contributors: ['octocat'], tags: ['circle'], categories: [] });
+    expect(r.meta).toEqual({ contributors: ['octocat'], tags: ['circle'], categories: ['shapes'] });
   });
 
   it('drops anything that is not geometry', () => {
@@ -113,26 +126,28 @@ describe('acceptSubmission', () => {
       sub({ svg: house('<script>alert(1)</script><circle cx="12" cy="12" r="10" onclick="x()"/>') }),
       'octocat',
       free,
+      CATS,
     );
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.svg).not.toMatch(/script|onclick|alert/);
   });
 
-  it('refuses a bad name, a taken name, no license and no geometry', () => {
+  it('refuses a bad name, a taken name, an unknown category, no license and no geometry', () => {
     const problems = (s: Submission, taken = free): string[] => {
-      const r = acceptSubmission(s, 'octocat', taken);
+      const r = acceptSubmission(s, 'octocat', taken, CATS);
       return r.ok ? [] : r.problems;
     };
     expect(problems(sub({ name: 'Ring Thing' }))).toHaveLength(1);
     expect(problems(sub(), () => true)[0]).toMatch(/already/);
     expect(problems(sub({ licensed: false }))[0]).toMatch(/License/);
+    expect(problems(sub({ category: 'misc' }))[0]).toMatch(/not one of: hardware, shapes/);
     expect(problems(sub({ svg: house('') })).join()).toMatch(/no geometry/);
     expect(problems(sub({ svg: '<svg' }))[0]).toMatch(/does not parse/);
   });
 
   it('refuses geometry that breaks the standard', () => {
-    const r = acceptSubmission(sub({ svg: house('<circle cx="12" cy="12" r="12"/>') }), 'o', free);
+    const r = acceptSubmission(sub({ svg: house('<circle cx="12" cy="12" r="12"/>') }), 'o', free, CATS);
     expect(r.ok).toBe(false);
   });
 });

@@ -17,6 +17,7 @@ export const TEMPLATE = 'submit-icon.yml';
 /** Issue-form field id -> the `label` GitHub renders as its heading. */
 export const FIELDS = {
   name: 'Name',
+  category: 'Category',
   tags: 'Tags',
   svg: 'SVG',
   license: 'License',
@@ -39,7 +40,13 @@ export function submitLink(name: string, svg: string): SubmitLink {
   return { url: `${base}${params.toString()}`, svgInUrl: false };
 }
 
-export type Submission = { name: string; tags: string[]; svg: string; licensed: boolean };
+export type Submission = {
+  name: string;
+  category: string;
+  tags: string[];
+  svg: string;
+  licensed: boolean;
+};
 
 /** What GitHub writes for a field the submitter left empty. */
 const NO_RESPONSE = '_No response_';
@@ -76,6 +83,7 @@ export function parseSubmission(body: string): Submission {
 
   return {
     name: field(FIELDS.name).trim(),
+    category: field(FIELDS.category).trim(),
     tags: field(FIELDS.tags)
       .split(',')
       .map((t) => t.trim().toLowerCase())
@@ -106,10 +114,14 @@ export function acceptSubmission(
   sub: Submission,
   author: string,
   taken: (name: string) => boolean,
+  categories: readonly string[],
 ): Accepted {
   const problems: string[] = [];
   if (!KEBAB.test(sub.name)) problems.push(`Name "${sub.name}" is not kebab-case.`);
   else if (taken(sub.name)) problems.push(`An icon named "${sub.name}" is already in the library.`);
+  if (!categories.includes(sub.category)) {
+    problems.push(`Category "${sub.category}" is not one of: ${categories.join(', ')}.`);
+  }
   if (!sub.licensed) problems.push('The MIT License box is not ticked.');
   if (!sub.svg) problems.push('The SVG field is empty.');
   if (problems.length > 0 || !sub.svg) return { ok: false, problems };
@@ -134,7 +146,7 @@ export function acceptSubmission(
     ok: true,
     name: sub.name,
     svg: serialize(doc),
-    meta: { contributors: [author], tags: sub.tags, categories: [] },
+    meta: { contributors: [author], tags: [...new Set(sub.tags)], categories: [sub.category] },
   };
 }
 

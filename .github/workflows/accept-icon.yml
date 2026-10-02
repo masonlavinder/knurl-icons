@@ -1,8 +1,9 @@
 name: Accept icon
 
 # A maintainer applying `approved` to an icon-submission issue opens a pull
-# request that adds the icon to library/. Merging that PR is what publishes it:
-# the merge is a push to main, so the deploy workflow runs as for any commit.
+# request that adds the icon to library/icons/. Merging that PR is what
+# publishes it: the merge is a push to main, so the deploy workflow runs as for
+# any commit.
 #
 # Labels can only be applied by people with triage access, so nothing here runs
 # for a submission until someone has looked at it.
@@ -58,17 +59,17 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git switch -c "$branch"
-          git add "library/$NAME.svg" "library/$NAME.json"
+          git add "library/icons/$NAME.svg" "library/icons/$NAME.json"
           git commit -m "Add $NAME icon" -m "Closes #$NUMBER"
           git push --force origin "$branch"
 
           # Pinned to the commit, so the preview shows exactly what merges
           # even if the branch is pushed again.
           sha=$(git rev-parse HEAD)
-          file="${{ github.server_url }}/${{ github.repository }}/blob/$sha/library/$NAME.svg"
+          file="${{ github.server_url }}/${{ github.repository }}/blob/$sha/library/icons/$NAME.svg"
           preview() {
             printf '<img src="%s?raw=true" width="96" height="96" alt="%s">\n\n' "$file" "$NAME"
-            printf 'Generated file: [`library/%s.svg`](%s)\n' "$NAME" "$file"
+            printf 'Generated file: [`library/icons/%s.svg`](%s)\n' "$NAME" "$file"
           }
 
           if gh pr view "$branch" > /dev/null 2>&1; then
