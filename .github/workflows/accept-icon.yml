@@ -8,9 +8,12 @@ name: Accept icon
 # Anyone can file an issue, so this runs on untrusted input. What reaches the
 # repo is only ever the serializer's output on a branch, never the issue text,
 # and only a maintainer can merge the branch.
+#
+# `labeled` is there for an issue filed before the label existed, or by hand:
+# adding icon-submission to it runs this as if it had just been filed.
 on:
   issues:
-    types: [opened, edited, reopened]
+    types: [opened, edited, reopened, labeled]
 
 permissions:
   contents: write
@@ -27,7 +30,8 @@ jobs:
     # has either been merged or abandoned, so its edits are left alone.
     if: >-
       github.event.issue.state == 'open' &&
-      contains(github.event.issue.labels.*.name, 'icon-submission')
+      contains(github.event.issue.labels.*.name, 'icon-submission') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'icon-submission')
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
