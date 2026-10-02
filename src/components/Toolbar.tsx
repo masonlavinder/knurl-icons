@@ -5,8 +5,8 @@ const BASE = import.meta.env.BASE_URL;
 export type PageKey = 'home' | 'icons' | 'editor';
 
 const NAV: { key: PageKey; label: string; href: string }[] = [
-  { key: 'icons', label: 'Icons', href: `${BASE}icons/` },
   { key: 'editor', label: 'Editor', href: `${BASE}editor/` },
+  { key: 'icons', label: 'Icons', href: `${BASE}icons/` },
 ];
 
 /**

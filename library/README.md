@@ -29,7 +29,9 @@ never moves a file or breaks a link.
 
 ## Categories
 
-Every icon has at least one, from [categories.json](categories.json):
+Optional, and an icon may have several, from [categories.json](categories.json).
+An icon with none is shelved under **Other** in the gallery until someone files
+it.
 
 | id | for |
 |---|---|
@@ -69,9 +71,11 @@ original author first.
 ## Adding an icon
 
 **From the editor** (the usual way): draw it, get every conformance rule to
-pass, and press **Submit**. That opens a pre-filled issue. A maintainer labels
-it `approved`, and [accept-icon.yml](../.github/workflows/accept-icon.yml) opens
-a PR that adds the pair. Merging the PR deploys it.
+pass, and press **Submit**. That opens a pre-filled issue titled
+`Icon: <name>`, and the title is where the name comes from. Filing the issue
+runs [accept-icon.yml](../.github/workflows/accept-icon.yml), which opens a PR
+that adds the pair, with a preview. Editing the issue updates the PR. Merging
+the PR deploys the icon, and that merge is the only review step.
 
 **By hand** (maintainers): add the `.svg` and `.json` to `icons/`, then run
 

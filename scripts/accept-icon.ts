@@ -1,9 +1,10 @@
 /**
- * Turns an approved icon-submission issue into library files.
+ * Turns an icon-submission issue into library files.
  *
  * Run by .github/workflows/accept-icon.yml, which passes the issue through the
  * environment — never through the shell — because the body is untrusted text:
  *
+ *   ISSUE_TITLE   `Icon: <name>`, where the name comes from
  *   ISSUE_BODY    the filed issue-form body
  *   ISSUE_AUTHOR  the submitter's GitHub login, credited as contributor
  *
@@ -23,12 +24,13 @@ const library = join(root, 'library');
 const icons = join(library, 'icons');
 const categories = Object.keys(JSON.parse(readFileSync(join(library, 'categories.json'), 'utf8')));
 
+const title = process.env.ISSUE_TITLE ?? '';
 const body = process.env.ISSUE_BODY ?? '';
 const author = process.env.ISSUE_AUTHOR ?? '';
 
 registerNodeXmlParser();
 const result = acceptSubmission(
-  parseSubmission(body),
+  parseSubmission(title, body),
   author,
   (name) => existsSync(join(icons, `${name}.svg`)),
   categories,
@@ -40,7 +42,7 @@ if (!result.ok) {
     '',
     ...result.problems.map((p) => `- ${p}`),
     '',
-    'Edit the issue to fix these, then remove and re-apply the `approved` label.',
+    'Edit the issue to fix these and this check runs again.',
   ].join('\n');
   writeFileSync(join(root, 'accept-error.md'), `${report}\n`);
   console.error(report);

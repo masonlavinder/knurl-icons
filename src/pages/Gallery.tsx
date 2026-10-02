@@ -24,17 +24,19 @@ function loadIcons(): Icon[] {
 }
 
 /**
- * Shelved by category, in categories.json order. An icon in two categories
- * appears on both shelves; that is the point of filing it twice.
+ * Shelved by category, in categories.json order, with uncategorised icons
+ * last under Other. An icon in two categories appears on both shelves; that
+ * is the point of filing it twice.
  */
 const shelve = (icons: Icon[]): { id: string; title: string; icons: Icon[] }[] =>
-  Object.entries(CATEGORIES)
-    .map(([id, c]) => ({
+  [
+    ...Object.entries(CATEGORIES).map(([id, c]) => ({
       id,
       title: c.title,
       icons: icons.filter((i) => i.meta.categories.includes(id)),
-    }))
-    .filter((s) => s.icons.length > 0);
+    })),
+    { id: 'other', title: 'Other', icons: icons.filter((i) => i.meta.categories.length === 0) },
+  ].filter((s) => s.icons.length > 0);
 
 export default function Gallery(): React.JSX.Element {
   const icons = useMemo(loadIcons, []);

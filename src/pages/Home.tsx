@@ -12,8 +12,8 @@ export default function Home(): React.JSX.Element {
           <h1 className="page-title">Knurled Icons</h1>
           <p className="page-lede">Free 24×24 stroke icons, compatible with Lucide.</p>
           <nav className="home-links" aria-label="Start">
-            <a href={`${BASE}icons/`}>Browse the icons</a>
             <a href={`${BASE}editor/`}>Open the editor</a>
+            <a href={`${BASE}icons/`}>Browse the icons</a>
           </nav>
         </div>
       </main>

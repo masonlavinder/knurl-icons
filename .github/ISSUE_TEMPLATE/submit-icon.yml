@@ -8,33 +8,27 @@ body:
   - type: markdown
     attributes:
       value: |
-        Submissions are reviewed by hand. Once approved, a pull request adds the
-        icon to the library and it becomes free to download from
-        [icons.knurled.studio/icons](https://icons.knurled.studio/icons/).
+        **The title is the icon's name**: keep it as `Icon: <name>`, for
+        example `Icon: gear check`. It becomes the file name `gear-check.svg`.
 
-  - type: input
-    id: name
-    attributes:
-      label: Name
-      description: kebab-case, like `gear-check`. This becomes the file name.
-      placeholder: gear-check
-    validations:
-      required: true
+        Filing this opens a pull request that adds the icon to the library, with
+        a preview. Once a maintainer merges it, the icon is free to download from
+        [icons.knurled.studio/icons](https://icons.knurled.studio/icons/). Edit
+        this issue and the pull request updates to match.
 
   # One option per key in library/categories.json; src/library.test.ts fails
   # if the two lists drift apart.
   - type: dropdown
-    id: category
+    id: categories
     attributes:
-      label: Category
-      description: Where the icon is filed in the gallery.
+      label: Categories
+      description: Optional. Where the icon is shelved in the gallery; leave it empty if none fit.
+      multiple: true
       options:
         - editor
         - hardware
         - measure
         - shapes
-    validations:
-      required: true
 
   - type: input
     id: tags

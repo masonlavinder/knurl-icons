@@ -1,15 +1,16 @@
 name: Accept icon
 
-# A maintainer applying `approved` to an icon-submission issue opens a pull
-# request that adds the icon to library/icons/. Merging that PR is what
-# publishes it: the merge is a push to main, so the deploy workflow runs as for
-# any commit.
+# Filing an icon-submission issue opens a pull request that adds the icon to
+# library/icons/, and editing the issue updates that PR. Nothing is published
+# until a maintainer merges it: the merge is a push to main, so the deploy
+# workflow runs as for any commit. The PR is the review step.
 #
-# Labels can only be applied by people with triage access, so nothing here runs
-# for a submission until someone has looked at it.
+# Anyone can file an issue, so this runs on untrusted input. What reaches the
+# repo is only ever the serializer's output on a branch, never the issue text,
+# and only a maintainer can merge the branch.
 on:
   issues:
-    types: [labeled]
+    types: [opened, edited, reopened]
 
 permissions:
   contents: write
@@ -22,8 +23,10 @@ concurrency:
 
 jobs:
   accept:
+    # The form applies icon-submission when the issue is filed. A closed issue
+    # has either been merged or abandoned, so its edits are left alone.
     if: >-
-      github.event.label.name == 'approved' &&
+      github.event.issue.state == 'open' &&
       contains(github.event.issue.labels.*.name, 'icon-submission')
     runs-on: ubuntu-latest
     env:
@@ -41,11 +44,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The body and author are untrusted text, so they travel as environment
-      # variables. Interpolating them into a `run:` line would let an issue
-      # body run commands.
+      # The title, body and author are untrusted text, so they travel as
+      # environment variables. Interpolating them into a `run:` line would let
+      # an issue run commands.
       - id: icon
         env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
         run: node scripts/accept-icon.ts
@@ -72,17 +76,19 @@ jobs:
             printf 'Generated file: [`library/icons/%s.svg`](%s)\n' "$NAME" "$file"
           }
 
-          if gh pr view "$branch" > /dev/null 2>&1; then
-            pr=$(gh pr view "$branch" --json url --jq .url)
-          else
-            { printf 'Adds `%s` from #%s. Merging publishes it to the icon library.\n\n' "$NAME" "$NUMBER"
-              preview
-              printf '\nCloses #%s\n' "$NUMBER"; } > pr-body.md
-            pr=$(gh pr create --head "$branch" --title "Add $NAME icon" --body-file pr-body.md)
-          fi
+          { printf 'Adds `%s` from #%s. Merging publishes it to the icon library.\n\n' "$NAME" "$NUMBER"
+            preview
+            printf '\nCloses #%s\n' "$NUMBER"; } > pr-body.md
 
-          { printf 'Approved: %s\n\n' "$pr"; preview; } > issue-comment.md
-          gh issue comment "$NUMBER" --body-file issue-comment.md
+          # An edit to the issue force-pushes the branch above, so an open PR
+          # already shows the new file; only its preview needs refreshing.
+          if gh pr view "$branch" --json state --jq .state 2> /dev/null | grep -qx OPEN; then
+            gh pr edit "$branch" --body-file pr-body.md
+          else
+            pr=$(gh pr create --head "$branch" --title "Add $NAME icon" --body-file pr-body.md)
+            { printf 'Pull request opened: %s\n\n' "$pr"; preview; } > issue-comment.md
+            gh issue comment "$NUMBER" --body-file issue-comment.md
+          fi
 
       - if: failure()
         run: |

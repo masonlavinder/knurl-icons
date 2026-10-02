@@ -57,11 +57,12 @@ That constraint is what makes moving the pipeline into a worker later a
 ## Submitting icons
 
 The editor's **Submit** button (enabled once every conformance rule passes)
-opens a pre-filled GitHub issue. Labelling it `approved` runs
+opens a pre-filled GitHub issue titled `Icon: <name>`. Filing it runs
 [accept-icon.yml](.github/workflows/accept-icon.yml), which re-parses and
-re-lints the SVG, writes the editor's own serializer output to `library/icons/`, and
-opens a PR with a preview. Merging the PR deploys the icon. Icons are MIT
-licensed; see [LICENSE](LICENSE) and [library/README.md](library/README.md).
+re-lints the SVG, writes the editor's own serializer output to `library/icons/`,
+and opens a PR with a preview. Editing the issue updates the PR. Merging the PR
+deploys the icon. Icons are MIT licensed; see [LICENSE](LICENSE) and
+[library/README.md](library/README.md).
 
 ## Brand
 

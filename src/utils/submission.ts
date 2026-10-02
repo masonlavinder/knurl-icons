@@ -5,6 +5,11 @@
  * (.github/ISSUE_TEMPLATE/submit-icon.yml); the accept-icon workflow reads the
  * filed issue back. The field ids and headings below must match that template,
  * and keeping the writer and the reader together is what keeps them matching.
+ *
+ * The icon's name travels in the issue title, not in a form field. GitHub keeps
+ * re-applying a pre-filled form input from the URL while it is being typed in,
+ * so a pre-filled name field could not be edited; the title has no such
+ * problem.
  */
 import { serialize } from '../core/io/export/serialize.ts';
 import { checkConformance, KEBAB } from '../core/io/import/lint.ts';
@@ -16,8 +21,7 @@ export const TEMPLATE = 'submit-icon.yml';
 
 /** Issue-form field id -> the `label` GitHub renders as its heading. */
 export const FIELDS = {
-  name: 'Name',
-  category: 'Category',
+  categories: 'Categories',
   tags: 'Tags',
   svg: 'SVG',
   license: 'License',
@@ -32,8 +36,11 @@ const MAX_URL = 8000;
 
 export type SubmitLink = { url: string; svgInUrl: boolean };
 
+/** Issue titles read `Icon: <name>`. */
+const TITLE_PREFIX = /^\s*icon\s*:\s*/i;
+
 export function submitLink(name: string, svg: string): SubmitLink {
-  const params = new URLSearchParams({ template: TEMPLATE, title: `Icon: ${name}`, name });
+  const params = new URLSearchParams({ template: TEMPLATE, title: `Icon: ${name}` });
   const base = `https://github.com/${REPO}/issues/new?`;
   const withSvg = `${base}${params.toString()}&svg=${encodeURIComponent(svg)}`;
   if (withSvg.length <= MAX_URL) return { url: withSvg, svgInUrl: true };
@@ -42,7 +49,7 @@ export function submitLink(name: string, svg: string): SubmitLink {
 
 export type Submission = {
   name: string;
-  category: string;
+  categories: string[];
   tags: string[];
   svg: string;
   licensed: boolean;
@@ -52,12 +59,32 @@ export type Submission = {
 const NO_RESPONSE = '_No response_';
 
 /**
- * Read a filed issue-form body back into its fields.
- *
- * GitHub renders each field as `### <label>` followed by the value; a textarea
- * with `render: xml` arrives fenced, and a checkbox as a task-list item.
+ * Turn whatever was typed after `Icon:` into a file name: "Gear Check" and
+ * "gear_check" both become `gear-check`, so a submitter never has to know what
+ * kebab-case is.
  */
-export function parseSubmission(body: string): Submission {
+export function nameFromTitle(title: string): string {
+  return title
+    .replace(TITLE_PREFIX, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+const list = (v: string): string[] =>
+  v
+    .split(',')
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+
+/**
+ * Read a filed issue back into its fields.
+ *
+ * GitHub renders each form field as `### <label>` followed by the value; a
+ * textarea with `render: xml` arrives fenced, a multi-select dropdown as a
+ * comma-separated list, and a checkbox as a task-list item.
+ */
+export function parseSubmission(title: string, body: string): Submission {
   const sections = new Map<string, string>();
   let current: string | null = null;
   const lines: string[] = [];
@@ -82,12 +109,9 @@ export function parseSubmission(body: string): Submission {
   };
 
   return {
-    name: field(FIELDS.name).trim(),
-    category: field(FIELDS.category).trim(),
-    tags: field(FIELDS.tags)
-      .split(',')
-      .map((t) => t.trim().toLowerCase())
-      .filter(Boolean),
+    name: nameFromTitle(title),
+    categories: list(field(FIELDS.categories)),
+    tags: list(field(FIELDS.tags)),
     svg: unfence(field(FIELDS.svg)),
     licensed: /^- \[[xX]\]/m.test(field(FIELDS.license)),
   };
@@ -117,10 +141,13 @@ export function acceptSubmission(
   categories: readonly string[],
 ): Accepted {
   const problems: string[] = [];
-  if (!KEBAB.test(sub.name)) problems.push(`Name "${sub.name}" is not kebab-case.`);
+  if (!KEBAB.test(sub.name)) problems.push('The issue title needs a name after `Icon:`.');
   else if (taken(sub.name)) problems.push(`An icon named "${sub.name}" is already in the library.`);
-  if (!categories.includes(sub.category)) {
-    problems.push(`Category "${sub.category}" is not one of: ${categories.join(', ')}.`);
+  // Optional: an uncategorised icon is shelved under Other until someone files
+  // it. Only a category that does not exist is a problem.
+  const unknown = sub.categories.filter((c) => !categories.includes(c));
+  if (unknown.length > 0) {
+    problems.push(`Unknown categories: ${unknown.join(', ')} (known: ${categories.join(', ')}).`);
   }
   if (!sub.licensed) problems.push('The MIT License box is not ticked.');
   if (!sub.svg) problems.push('The SVG field is empty.');
@@ -146,7 +173,11 @@ export function acceptSubmission(
     ok: true,
     name: sub.name,
     svg: serialize(doc),
-    meta: { contributors: [author], tags: [...new Set(sub.tags)], categories: [sub.category] },
+    meta: {
+      contributors: [author],
+      tags: [...new Set(sub.tags)],
+      categories: [...new Set(sub.categories)],
+    },
   };
 }
 

@@ -48,7 +48,6 @@ describe('library', () => {
       expect(Object.keys(meta ?? {}).sort()).toEqual(['categories', 'contributors', 'tags']);
       if (!meta) return;
       expect(meta.contributors.length, 'contributors').toBeGreaterThan(0);
-      expect(meta.categories.length, 'categories').toBeGreaterThan(0);
       for (const c of meta.categories) expect(Object.keys(CATEGORIES)).toContain(c);
       expect(meta.tags.length, 'tags').toBeGreaterThan(0);
       for (const t of meta.tags) expect(t).toMatch(TAG);
@@ -62,7 +61,7 @@ describe('submit-icon issue form', () => {
   const form = readFileSync(join(here, '..', '.github/ISSUE_TEMPLATE/submit-icon.yml'), 'utf8');
 
   it('offers exactly the categories in library/categories.json', () => {
-    const block = /id: category[\s\S]*?options:\n((?: {8}- .+\n)+)/.exec(form);
+    const block = /id: categories[\s\S]*?options:\n((?: {8}- .+\n)+)/.exec(form);
     const options = block![1]!.trim().split('\n').map((l) => l.trim().replace(/^- /, ''));
     expect(options).toEqual(Object.keys(CATEGORIES));
   });
