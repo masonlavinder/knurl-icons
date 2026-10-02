@@ -1,4 +1,4 @@
-# vendor/knurled-kit
+# styles
 
 A mirror of `@knurled/kit` from the [knurled-studio][studio] monorepo. **Do not
 edit these files.** Change them upstream and run `pnpm kit:sync`.
@@ -21,7 +21,7 @@ a registry, a checked-in mirror is the honest version of the coupling.
 | `fonts.css` | `packages/kit/src/fonts.css` |
 | `stylelint-config.js` | `packages/stylelint-config/index.js` |
 
-Components are **not** mirrored. `src/brand` reimplements `Mark`, `Knurl` and
+Components are **not** mirrored. `src/components/brand` reimplements `Mark`, `Knurl` and
 `StudioFooter` against the dark work surface, so copying them over would
 overwrite a deliberate adaptation. They compose from `patterns.css` here, which
 is what keeps their geometry from drifting.
@@ -41,9 +41,9 @@ broken build. Run it when you touch the kit.
 ## Deviations
 
 There are none in these files, by construction. Everything this app does
-differently lives in [`src/brand/instrument.css`](../../src/brand/instrument.css),
+differently lives in [`src/instrument.css`](../src/instrument.css),
 which repoints the semantic aliases at the dark end of the same ramp, and in
-[`stylelint.config.js`](../../stylelint.config.js), which extends the mirrored
+[`stylelint.config.js`](../stylelint.config.js), which extends the mirrored
 config rather than editing it.
 
 [studio]: https://github.com/masonlavinder/knurled-studio

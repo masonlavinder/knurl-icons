@@ -6,8 +6,8 @@ import { describeElement } from '../../core/model/access.ts';
 import { encodeAddr } from '../../core/model/address.ts';
 import { ADDABLE } from '../../core/model/factory.ts';
 import type { Address, Element } from '../../core/model/types.ts';
-import { useDocStore } from '../../store/docStore.ts';
-import { useSelectionStore } from '../../store/selectionStore.ts';
+import { useDocStore } from '../../stores/docStore.ts';
+import { useSelectionStore } from '../../stores/selectionStore.ts';
 import { ElementInspector } from './ElementInspector.tsx';
 import { SectionHead, useSectionOpen } from './SectionHead.tsx';
 

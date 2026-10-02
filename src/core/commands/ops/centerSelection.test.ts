@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { registerNodeXmlParser } from '../../../platform/xmlNode.ts';
+import { registerNodeXmlParser } from '../../../utils/xmlNode.ts';
 import { geometricBox } from '../../geom/bbox.ts';
 import { parseSvg } from '../../io/import/parseSvg.ts';
 import type { IconDoc } from '../../model/types.ts';

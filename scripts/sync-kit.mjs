@@ -1,5 +1,5 @@
 /**
- * Syncs the vendored copy of @knurled/kit's stylesheets.
+ * Syncs the mirrored copy of @knurled/kit's stylesheets.
  *
  * knurl-icons lives in its own repository because a GitHub repo can publish
  * exactly one Pages site, and knurled-studio already publishes knurled.studio.
@@ -10,7 +10,7 @@
  *   node scripts/sync-kit.mjs            pull upstream over the mirror
  *
  * Upstream defaults to ../knurled-studio next to this checkout; override with
- * KNURLED_STUDIO. --check is what keeps "vendored" from meaning "forked": it
+ * KNURLED_STUDIO. --check is what keeps "mirrored" from meaning "forked": it
  * reports drift and exits non-zero, and a clean run is the whole report.
  */
 import { createHash } from 'node:crypto';
@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url';
  * because it is what actually enforces the brand — a banned border-radius
  * fails the build here for the same reason it does in the studio.
  *
- * Components are NOT mirrored: src/brand reimplements them against the dark
+ * Components are NOT mirrored: src/components/brand reimplements them against the dark
  * work surface, so copying them would overwrite a deliberate adaptation.
  */
 const FILES = [
@@ -37,7 +37,7 @@ const FILES = [
 ];
 
 const here = dirname(fileURLToPath(import.meta.url));
-const mirror = resolve(here, '..', 'vendor', 'knurled-kit');
+const mirror = resolve(here, '..', 'styles');
 const studio = process.env.KNURLED_STUDIO ?? resolve(here, '..', '..', 'knurled-studio');
 
 const check = process.argv.includes('--check');

@@ -1,13 +1,13 @@
 /* knurl-icons — index.css
 
    Color, type, spacing and geometry all come from the studio token layer:
-   vendor/knurled-kit/tokens.css defines them, src/brand/instrument.css
+   styles/tokens.css defines them, src/instrument.css
    repoints the semantic aliases at the dark end of the same ramp. There is no
    local palette here any more — a second set of names for the same colors is
    exactly the drift the token layer exists to prevent.
 
    Chamfers, not rounded corners. Depth is hairline ink rules and flat surface
-   steps, never a shadow or a gradient. vendor/knurled-kit/stylelint-config.js
+   steps, never a shadow or a gradient. styles/stylelint-config.js
    enforces both, and `pnpm lint:css` fails the build on either. */
 
 .app {

@@ -1,4 +1,4 @@
-import { useViewStore, type SectionId } from '../../store/viewStore.ts';
+import { useViewStore, type SectionId } from '../../stores/viewStore.ts';
 import { Chevron } from '../Chevron.tsx';
 
 /**

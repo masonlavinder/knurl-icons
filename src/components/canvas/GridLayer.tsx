@@ -5,7 +5,7 @@ import {
   VISUAL_MAX,
   VISUAL_MIN,
 } from '../../core/constants.ts';
-import { useViewStore } from '../../store/viewStore.ts';
+import { useViewStore } from '../../stores/viewStore.ts';
 
 /**
  * Grid, padding boxes and keyline shapes.

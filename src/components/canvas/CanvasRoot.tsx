@@ -7,7 +7,7 @@ import { controlsOf, nodeListsOf } from '../../core/model/access.ts';
 import { decodeAddr, encodeAddr, promoteToSubpath } from '../../core/model/address.ts';
 import type { Address, Element, Node } from '../../core/model/types.ts';
 import { elementToPathData, toTagAndAttrs } from '../../core/render/tagAttrs.ts';
-import { useDocStore } from '../../store/docStore.ts';
+import { useDocStore } from '../../stores/docStore.ts';
 import {
   beginDrag,
   cancelDrag,
@@ -15,10 +15,10 @@ import {
   dragMoved,
   isDragging,
   updateDrag,
-} from '../../store/dragSession.ts';
-import { useSelectionStore } from '../../store/selectionStore.ts';
-import { span, useViewStore } from '../../store/viewStore.ts';
-import { nodeColor } from '../nodeColor.ts';
+} from '../../stores/dragSession.ts';
+import { useSelectionStore } from '../../stores/selectionStore.ts';
+import { span, useViewStore } from '../../stores/viewStore.ts';
+import { nodeColor } from '../../utils/nodeColor.ts';
 import { GridLayer } from './GridLayer.tsx';
 
 /**

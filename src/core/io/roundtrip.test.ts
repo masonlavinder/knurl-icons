@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { registerNodeXmlParser } from '../../platform/xmlNode.ts';
+import { registerNodeXmlParser } from '../../utils/xmlNode.ts';
 import { corpusAvailable, loadCorpus } from '../../test/corpus/loadCorpus.ts';
 import { comparePixels, GATE } from '../../test/raster/diff.ts';
 import { resvgAvailable } from '../../test/raster/rasterize.ts';

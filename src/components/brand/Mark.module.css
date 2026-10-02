@@ -6,7 +6,7 @@
      it sits on rather than --surface-page: the header here is a panel, and a
      glyph carrying the page color would read as a hole cut through it. */
   .shell {
-    composes: chamferShell from '../../vendor/knurled-kit/patterns.css';
+    composes: chamferShell from '../../../styles/patterns.css';
 
     display: flex;
     flex: none;
@@ -21,8 +21,8 @@
   }
 
   .face {
-    composes: chamferFace from '../../vendor/knurled-kit/patterns.css';
-    composes: knurl from '../../vendor/knurled-kit/patterns.css';
+    composes: chamferFace from '../../../styles/patterns.css';
+    composes: knurl from '../../../styles/patterns.css';
 
     flex: 1;
     background-color: var(--surface-panel);

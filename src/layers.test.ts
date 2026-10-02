@@ -25,13 +25,13 @@ const at = (specifier: string) => main.indexOf(`'${specifier}'`);
 
 describe('cascade order', () => {
   it('imports global.css before any other stylesheet', () => {
-    const global = at('../vendor/knurled-kit/global.css');
+    const global = at('../styles/global.css');
     expect(global).toBeGreaterThan(-1);
 
     for (const sheet of [
-      '../vendor/knurled-kit/tokens.css',
-      '../vendor/knurled-kit/fonts.css',
-      './brand/instrument.css',
+      '../styles/tokens.css',
+      '../styles/fonts.css',
+      './instrument.css',
       './index.css',
     ]) {
       expect(at(sheet), `${sheet} must come after global.css`).toBeGreaterThan(global);
@@ -39,11 +39,11 @@ describe('cascade order', () => {
   });
 
   it('imports every stylesheet before the component tree', () => {
-    const app = at('./App.tsx');
-    expect(app).toBeGreaterThan(-1);
+    const editor = at('./pages/Editor.tsx');
+    expect(editor).toBeGreaterThan(-1);
 
-    // App pulls in src/brand, whose modules open @layer components.
-    expect(at('../vendor/knurled-kit/global.css')).toBeLessThan(app);
-    expect(at('./index.css')).toBeLessThan(app);
+    // Editor pulls in src/components/brand, whose modules open @layer components.
+    expect(at('../styles/global.css')).toBeLessThan(editor);
+    expect(at('./index.css')).toBeLessThan(editor);
   });
 });

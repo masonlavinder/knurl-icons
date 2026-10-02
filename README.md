@@ -18,7 +18,7 @@ pnpm test             # unit tests (fast, no corpus needed)
 pnpm corpus:fetch     # download the pinned upstream corpus into .cache/
 pnpm test:all         # unit + corpus gates (~18s)
 pnpm corpus:drift     # byte-identity report against upstream
-pnpm kit:check        # verify the vendored studio kit matches upstream
+pnpm kit:check        # verify the mirrored studio kit matches upstream
 node scripts/check-m0.mjs   # M0 gate, in a real browser (dev server must be up)
 pnpm check:view       # view gate: the icon cannot be panned or zoomed off screen
 ```
@@ -26,17 +26,20 @@ pnpm check:view       # view gate: the icon cannot be panned or zoomed off scree
 ## Layout
 
 ```
-src/core/     pure. no react, no zustand, no DOM. node-testable, worker-movable.
-  model/      document types, addressing, element access
-  geom/       points, boxes, arcs, node-deletion refit
-  path/       `d` parsing, number formatting, shortest-encoding emitter
-  io/         SVG import + deterministic serializer
-  render/     element -> tag/attrs, shared by the serializer AND the canvas
-  commands/   command + history types, delete semantics
-src/brand/    the studio mark, lockup, footer + the one substrate deviation
-src/store/    zustand stores: document, selection, view
-src/ui/       canvas layers, panels, keyboard
-src/platform/ DOM/XML adapters injected into core (browser + node)
+src/core/        pure. no react, no zustand, no DOM. node-testable, worker-movable.
+  model/         document types, addressing, element access
+  geom/          points, boxes, arcs, node-deletion refit
+  path/          `d` parsing, number formatting, shortest-encoding emitter
+  io/            SVG import + deterministic serializer
+  render/        element -> tag/attrs, shared by the serializer AND the canvas
+  commands/      command + history types, delete semantics
+src/pages/       the editor page
+src/components/  brand (mark, footer), canvas layers, dock panels
+src/hooks/       keyboard
+src/stores/      zustand stores: document, selection, view, drag
+src/utils/       small helpers + DOM/XML adapters injected into core (browser + node)
+src/test/        corpus loader and comparison helpers shared by tests and scripts
+src/instrument.css  the one substrate deviation from the studio kit
 ```
 
 `src/core/**` must never import React, zustand, or touch `window`/`document`.
@@ -46,15 +49,15 @@ That constraint is what makes moving the pipeline into a worker later a
 ## Brand
 
 The design system comes from `@knurled/kit` in
-the [knurled-studio][studio] monorepo, mirrored into `vendor/knurled-kit`
+the [knurled-studio][studio] monorepo, mirrored into `styles`
 because a GitHub repository can publish only one Pages site and that repo
-already publishes `knurled.studio` — see [vendor/knurled-kit/README.md] for
-what that costs and how to stay current. `vendor/knurled-kit/stylelint-config.js`
+already publishes `knurled.studio` — see [styles/README.md] for
+what that costs and how to stay current. `styles/stylelint-config.js`
 is mirrored along with it, so a banned `border-radius` fails the build here for
 the same reason it does there.
 
 The tokens, type, chamfer, knurl and 4px grid are the studio's, unmodified.
-There is exactly one deviation and it lives in `src/brand/instrument.css`: the
+There is exactly one deviation and it lives in `src/instrument.css`: the
 studio is light — "one theme, and it is light" — and this is not. An icon is
 judged against the ground it will sit on, so the editor keeps a dark work
 surface. What that file does is repoint the *semantic aliases* at the dark end
@@ -62,7 +65,7 @@ of the same ink ramp, which is why `patterns.css` is consumed verbatim and every
 fragment in it comes out correct without an override.
 
 [studio]: https://github.com/masonlavinder/knurled-studio
-[vendor/knurled-kit/README.md]: vendor/knurled-kit/README.md
+[styles/README.md]: styles/README.md
 
 ## Document model
 
@@ -133,7 +136,7 @@ Direct manipulation on the canvas, with the panels for exact numbers:
   been dragged outside the artboard is still reachable — past 24 units the
   view is wider than the artboard, so zooming out shows the ground around it.
   `pnpm check:view` proves this against the running app and
-  `src/store/viewStore.test.ts` against the store, over 2000 interleaved pans
+  `src/stores/viewStore.test.ts` against the store, over 2000 interleaved pans
   and zooms.
 - Each node carries a stable hue, shown as a ring on the canvas and a matching
   swatch in the element tree, so the two panels identify each other without

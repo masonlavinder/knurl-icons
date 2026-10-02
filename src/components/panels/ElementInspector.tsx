@@ -10,9 +10,9 @@ import { describeElement, nodeListsOf } from '../../core/model/access.ts';
 import { encodeAddr } from '../../core/model/address.ts';
 import type { Address, Element } from '../../core/model/types.ts';
 import { round } from '../../core/path/num.ts';
-import { useDocStore } from '../../store/docStore.ts';
-import { useSelectionStore } from '../../store/selectionStore.ts';
-import { nodeColor } from '../nodeColor.ts';
+import { useDocStore } from '../../stores/docStore.ts';
+import { useSelectionStore } from '../../stores/selectionStore.ts';
+import { nodeColor } from '../../utils/nodeColor.ts';
 
 type Field = { label: string; path: string; value: number };
 

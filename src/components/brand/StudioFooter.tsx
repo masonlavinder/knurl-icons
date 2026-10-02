@@ -1,8 +1,8 @@
 import type { CSSProperties } from 'react';
 
 import { Mark } from './Mark.tsx';
-import { PART, STUDIO_HOME } from './part.ts';
-import { cx } from './cx.ts';
+import { PART, STUDIO_HOME } from '../../utils/part.ts';
+import { cx } from '../../utils/cx.ts';
 import styles from './StudioFooter.module.css';
 
 /**

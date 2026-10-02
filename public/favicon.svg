@@ -9,7 +9,7 @@
        as knurling at 16px and still reads as the same mark at 64.
 
        Hex is inlined because an icon cannot read the token layer. The values
-       are stock-800 and lavinder-400 — see src/brand/instrument.css. Note: an
+       are stock-800 and lavinder-400 — see src/instrument.css. Note: an
        XML comment cannot contain a double hyphen, so the custom properties are
        named without their leading dashes here. -->
   <defs>

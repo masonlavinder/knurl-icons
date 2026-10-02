@@ -1,6 +1,6 @@
 import { checkConformance, conformanceScore, toPascal } from '../../core/io/import/lint.ts';
-import { useDocStore } from '../../store/docStore.ts';
-import { useSelectionStore } from '../../store/selectionStore.ts';
+import { useDocStore } from '../../stores/docStore.ts';
+import { useSelectionStore } from '../../stores/selectionStore.ts';
 import { SectionHead, useSectionOpen } from './SectionHead.tsx';
 
 /**

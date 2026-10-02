@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 
-import { centerSelection } from '../../core/commands/ops/centerSelection.ts';
-import { moveGeometry } from '../../core/commands/ops/moveGeometry.ts';
-import { deleteAddresses } from '../../core/commands/ops/deleteAddresses.ts';
-import { encodeAddr } from '../../core/model/address.ts';
-import type { Address } from '../../core/model/types.ts';
-import { useDocStore } from '../../store/docStore.ts';
-import { useSelectionStore } from '../../store/selectionStore.ts';
-import { useViewStore } from '../../store/viewStore.ts';
+import { centerSelection } from '../core/commands/ops/centerSelection.ts';
+import { moveGeometry } from '../core/commands/ops/moveGeometry.ts';
+import { deleteAddresses } from '../core/commands/ops/deleteAddresses.ts';
+import { encodeAddr } from '../core/model/address.ts';
+import type { Address } from '../core/model/types.ts';
+import { useDocStore } from '../stores/docStore.ts';
+import { useSelectionStore } from '../stores/selectionStore.ts';
+import { useViewStore } from '../stores/viewStore.ts';
 
 /**
  * Keyboard control. Half of M0's gate is being able to select and delete by

@@ -8,7 +8,7 @@
  */
 import { serialize } from '../src/core/io/export/serialize.ts';
 import { parseSvg } from '../src/core/io/import/parseSvg.ts';
-import { registerNodeXmlParser } from '../src/platform/xmlNode.ts';
+import { registerNodeXmlParser } from '../src/utils/xmlNode.ts';
 import { loadCorpus } from '../src/test/corpus/loadCorpus.ts';
 
 registerNodeXmlParser();

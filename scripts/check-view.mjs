@@ -4,7 +4,7 @@
  *
  * The toolbar, the resizable dock and its sections, the panel controls, and the rule that the
  * icon cannot be panned or zoomed off screen. The clamp behind that last one is
- * unit-tested in src/store/viewStore.test.ts; what cannot be tested there is
+ * unit-tested in src/stores/viewStore.test.ts; what cannot be tested there is
  * whether the gestures actually reach it — a drag is a pointer capture, a wheel
  * is a passive listener, a button is a click on a chamfered face — so this
  * drives the real app in a real browser and reads the viewBox the SVG is

@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { serialize } from '../../core/io/export/serialize.ts';
 import { parseSvg } from '../../core/io/import/parseSvg.ts';
 import type { Diagnostic } from '../../core/result.ts';
-import { useDocStore } from '../../store/docStore.ts';
-import { lockedSpans } from './lockedSpans.ts';
+import { useDocStore } from '../../stores/docStore.ts';
+import { lockedSpans } from '../../utils/lockedSpans.ts';
 import { SectionHead, useSectionOpen } from './SectionHead.tsx';
 
 /**

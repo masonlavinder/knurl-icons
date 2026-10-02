@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { registerNodeXmlParser } from '../../platform/xmlNode.ts';
+import { registerNodeXmlParser } from '../../utils/xmlNode.ts';
 import { serialize } from './export/serialize.ts';
 import { checkConformance } from './import/lint.ts';
 import { parseSvg } from './import/parseSvg.ts';

@@ -1,26 +1,26 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import { Mark } from './brand/Mark.tsx';
-import { StudioFooter } from './brand/StudioFooter.tsx';
-import { alignSelection, centerSelection } from './core/commands/ops/centerSelection.ts';
-import { parseSvg } from './core/io/import/parseSvg.ts';
-import { serialize } from './core/io/export/serialize.ts';
-import type { IconDoc } from './core/model/types.ts';
-import { useDocStore } from './store/docStore.ts';
-import { useSelectionStore } from './store/selectionStore.ts';
+import { Mark } from '../components/brand/Mark.tsx';
+import { StudioFooter } from '../components/brand/StudioFooter.tsx';
+import { alignSelection, centerSelection } from '../core/commands/ops/centerSelection.ts';
+import { parseSvg } from '../core/io/import/parseSvg.ts';
+import { serialize } from '../core/io/export/serialize.ts';
+import type { IconDoc } from '../core/model/types.ts';
+import { useDocStore } from '../stores/docStore.ts';
+import { useSelectionStore } from '../stores/selectionStore.ts';
 import {
   defaultDockWidth,
   DOCK_LIMITS,
   span,
   useViewStore,
   ZOOM_LIMITS,
-} from './store/viewStore.ts';
-import { CanvasRoot } from './ui/canvas/CanvasRoot.tsx';
-import { useKeyboard } from './ui/hooks/useKeyboard.ts';
-import { CodePanel } from './ui/panels/CodePanel.tsx';
-import { ConformancePanel } from './ui/panels/ConformancePanel.tsx';
-import { ElementListPanel } from './ui/panels/ElementListPanel.tsx';
-import { ShortcutsPanel } from './ui/panels/ShortcutsPanel.tsx';
+} from '../stores/viewStore.ts';
+import { CanvasRoot } from '../components/canvas/CanvasRoot.tsx';
+import { useKeyboard } from '../hooks/useKeyboard.ts';
+import { CodePanel } from '../components/panels/CodePanel.tsx';
+import { ConformancePanel } from '../components/panels/ConformancePanel.tsx';
+import { ElementListPanel } from '../components/panels/ElementListPanel.tsx';
+import { ShortcutsPanel } from '../components/panels/ShortcutsPanel.tsx';
 
 /** The platform's command key, as the shortcut hints spell it. */
 const MOD =
@@ -46,7 +46,7 @@ const SEED = `<svg
 </svg>
 `;
 
-export default function App(): React.JSX.Element {
+export default function Editor(): React.JSX.Element {
   const replace = useDocStore((s) => s.replace);
   useKeyboard();
 
