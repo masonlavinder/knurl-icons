@@ -48,22 +48,39 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # The pinned Lucide set, so a copy of one of its icons is caught.
+      - run: node scripts/fetch-corpus.mjs
+
       # The title, body and author are untrusted text, so they travel as
       # environment variables. Interpolating them into a `run:` line would let
       # an issue run commands.
+      #
+      # CLAIMED is the names other open submissions hold, read from the titles
+      # this workflow gave their PRs, so two issues cannot race for one name.
       - id: icon
         env:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
-        run: node scripts/accept-icon.ts
+        run: |
+          CLAIMED=$(gh pr list --state open --limit 200 --json number,title,headRefName --jq "
+            [ .[]
+              | select(.headRefName | startswith(\"submission/\"))
+              | select(.headRefName != \"submission/$NUMBER\")
+              | select(.title | test(\"^Add [a-z0-9-]+ icon$\"))
+              | (.title | capture(\"^Add (?<n>[a-z0-9-]+) icon$\").n) + \":#\" + (.number | tostring)
+            ] | join(\",\")")
+          export CLAIMED
+          node scripts/accept-icon.ts
 
-      # NAME has already been checked against the kebab-case rule, so it is
-      # safe in a branch name and a commit message.
+      # One branch per issue, not per name: two issues can never push over each
+      # other, and renaming the icon in the title renames the same PR. NAME has
+      # already been checked against the kebab-case rule, so it is safe in a
+      # commit message.
       - env:
           NAME: ${{ steps.icon.outputs.name }}
         run: |
-          branch="icon/$NAME"
+          branch="submission/$NUMBER"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git switch -c "$branch"
@@ -82,12 +99,15 @@ jobs:
 
           { printf 'Adds `%s` from #%s. Merging publishes it to the icon library.\n\n' "$NAME" "$NUMBER"
             preview
+            # Near matches from the cross-check, for the reviewer.
+            if [ -f similar.md ]; then printf '\n'; cat similar.md; fi
             printf '\nCloses #%s\n' "$NUMBER"; } > pr-body.md
 
           # An edit to the issue force-pushes the branch above, so an open PR
-          # already shows the new file; only its preview needs refreshing.
+          # already shows the new file; only its title and preview need
+          # refreshing.
           if gh pr view "$branch" --json state --jq .state 2> /dev/null | grep -qx OPEN; then
-            gh pr edit "$branch" --body-file pr-body.md
+            gh pr edit "$branch" --title "Add $NAME icon" --body-file pr-body.md
           else
             pr=$(gh pr create --head "$branch" --title "Add $NAME icon" --body-file pr-body.md)
             { printf 'Pull request opened: %s\n\n' "$pr"; preview; } > issue-comment.md

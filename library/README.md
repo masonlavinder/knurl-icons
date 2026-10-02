@@ -75,7 +75,23 @@ pass, and press **Submit**. That opens a pre-filled issue titled
 `Icon: <name>`, and the title is where the name comes from. Filing the issue
 runs [accept-icon.yml](../.github/workflows/accept-icon.yml), which opens a PR
 that adds the pair, with a preview. Editing the issue updates the PR. Merging
-the PR deploys the icon, and that merge is the only review step.
+the PR deploys the icon.
+
+Before opening the PR, the workflow cross-checks the icon:
+
+- **Name**: refused if the library already has it, or another open
+  submission has claimed it.
+- **Copies**: refused if the geometry is identical to an icon in the library
+  or in the pinned Lucide set, or renders practically the same (97% overlap or
+  more). That covers a path split in two or reordered elements.
+- **Near matches** (85% and up) are listed in the PR for the reviewer. The
+  check can't decide these: different Lucide icons overlap by up to 96%, and a
+  slightly nudged copy by as little as 85%.
+
+**Merging takes a maintainer.** The `main` ruleset requires an approving
+review from a code owner ([CODEOWNERS](../.github/CODEOWNERS)) on every PR, and
+a later push to the PR (an edit to the issue) dismisses the approval. Admins
+can bypass it, which is also what lets them push to `main` directly.
 
 **By hand** (maintainers): add the `.svg` and `.json` to `icons/`, then run
 
@@ -87,3 +103,6 @@ pnpm test             # src/library.test.ts checks the whole library
 The test fails on anything that would not survive a Submit: a file not in
 serializer form, a conformance rule that does not pass (warnings included), a
 missing or orphaned `.json`, an unknown category, or malformed tags.
+[similar.test.ts](../src/test/raster/similar.test.ts) also fails if two library
+icons are copies of each other, or one copies Lucide. The Lucide half runs
+once `pnpm corpus:fetch` has been run.

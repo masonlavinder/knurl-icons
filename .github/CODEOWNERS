@@ -1,0 +1,4 @@
+# Every change to main needs an approving review from a code owner (enforced
+# by the "main" ruleset). Submission PRs are opened by github-actions, so this
+# is what makes merging an icon a maintainer's call.
+* @masonlavinder
