@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest';
  * stylesheets are written above anything that pulls in a component.
  */
 const here = dirname(fileURLToPath(import.meta.url));
-const main = readFileSync(join(here, '..', 'main.tsx'), 'utf8');
+const main = readFileSync(join(here, 'main.tsx'), 'utf8');
 
 const at = (specifier: string) => main.indexOf(`'${specifier}'`);
 
